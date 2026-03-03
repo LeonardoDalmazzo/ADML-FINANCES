@@ -7,6 +7,10 @@ public class MovimentacaoFinanceira
     public Guid Id { get; set; }
 
     [Required]
+    [MaxLength(20)]
+    public string TipoLancamento { get; set; } = "Pagar";
+
+    [Required]
     [MaxLength(150)]
     public string Descricao { get; set; } = string.Empty;
 
@@ -24,6 +28,9 @@ public class MovimentacaoFinanceira
 
     [MaxLength(300)]
     public string? Observacao { get; set; }
+
+    public Guid? EmpresaFrequenteId { get; set; }
+    public EmpresaFrequente? EmpresaFrequente { get; set; }
 
     public Guid CategoriaGastoId { get; set; }
     public CategoriaGasto? CategoriaGasto { get; set; }

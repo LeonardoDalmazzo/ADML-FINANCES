@@ -3,16 +3,19 @@ using System;
 using ADML_FINANCES.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ADML_FINANCES.Migrations
+namespace ADML_FINANCES.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260303175129_AddTipoLancamentoMovimentacao")]
+    partial class AddTipoLancamentoMovimentacao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
@@ -359,7 +362,7 @@ namespace ADML_FINANCES.Migrations
                         {
                             Id = new Guid("744768a3-0205-4da8-b51a-7a91684a35f3"),
                             Cor = "#ef4444",
-                            Nome = "Vencido"
+                            Nome = "Vencidado"
                         },
                         new
                         {

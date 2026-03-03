@@ -3,16 +3,19 @@ using System;
 using ADML_FINANCES.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ADML_FINANCES.Migrations
+namespace ADML_FINANCES.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260303163610_AddEmpresasFrequentes")]
+    partial class AddEmpresasFrequentes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
@@ -231,11 +234,6 @@ namespace ADML_FINANCES.Migrations
                     b.Property<Guid>("StatusPendenciaId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TipoLancamento")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Usuario")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -267,7 +265,6 @@ namespace ADML_FINANCES.Migrations
                             FormaPagamentoId = new Guid("19c2abfd-e8bc-4450-8ecb-fec0f5f236b4"),
                             Observacao = "Parcela unica.",
                             StatusPendenciaId = new Guid("8ea5d574-a363-47be-97b8-9ef15ce0fb1d"),
-                            TipoLancamento = "Pagar",
                             Usuario = "admin@finances.com",
                             Valor = 297.90m
                         },
@@ -282,7 +279,6 @@ namespace ADML_FINANCES.Migrations
                             FormaPagamentoId = new Guid("ad293e8f-b852-443a-8dd4-6f39a7baafe1"),
                             Observacao = "Recorrente.",
                             StatusPendenciaId = new Guid("7075cd4c-2f4f-499c-b538-d0c9124b1a8e"),
-                            TipoLancamento = "Pagar",
                             Usuario = "admin@finances.com",
                             Valor = 39.90m
                         },
@@ -296,7 +292,6 @@ namespace ADML_FINANCES.Migrations
                             FormaPagamentoId = new Guid("ad293e8f-b852-443a-8dd4-6f39a7baafe1"),
                             Observacao = "Medicamentos continuos.",
                             StatusPendenciaId = new Guid("c17a7b95-3240-4528-b062-dd0712bdd3c4"),
-                            TipoLancamento = "Pagar",
                             Usuario = "admin@finances.com",
                             Valor = 124.77m
                         },
@@ -310,7 +305,6 @@ namespace ADML_FINANCES.Migrations
                             FormaPagamentoId = new Guid("ad293e8f-b852-443a-8dd4-6f39a7baafe1"),
                             Observacao = "Compras da semana.",
                             StatusPendenciaId = new Guid("8b3d30f4-d44e-45f7-b996-d8400e0a32e0"),
-                            TipoLancamento = "Pagar",
                             Usuario = "admin@finances.com",
                             Valor = 286.40m
                         });
@@ -359,7 +353,7 @@ namespace ADML_FINANCES.Migrations
                         {
                             Id = new Guid("744768a3-0205-4da8-b51a-7a91684a35f3"),
                             Cor = "#ef4444",
-                            Nome = "Vencido"
+                            Nome = "Vencidado"
                         },
                         new
                         {

@@ -1,0 +1,159 @@
+@page "/gerenciar/empresas"
+@rendermode InteractiveServer
+@using ADML_FINANCES.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Db
+
+<PageTitle>Empresas frequentes</PageTitle>
+
+<h1>Empresas frequentes</h1>
+
+<div class="mb-3 d-flex gap-2">
+    <input class="form-control" placeholder="Nome da empresa" @bind="novoNome" />
+    <CrudButton Text="Cadastrar" IconClass="fa-solid fa-plus" Style="CrudButtonStyle.Create" OnClick="CadastrarAsync" />
+</div>
+
+<CrudTable TItem="EmpresaFrequente"
+           Headers="headers"
+           Items="itens">
+    <RowTemplate Context="item">
+        <td>@item.Id</td>
+        <td>
+            @if (editandoId == item.Id)
+            {
+                <input class="form-control form-control-sm" @bind="editandoNome" />
+            }
+            else
+            {
+                @item.Nome
+            }
+        </td>
+    </RowTemplate>
+    <ActionsTemplate Context="item">
+        <CrudButton Text="Editar"
+                    IconClass="fa-solid fa-pen-to-square"
+                    Style="CrudButtonStyle.Edit"
+                    OnClick="@(_ => Editar(item))"
+                    Disabled="@(editandoId == item.Id)" />
+        <CrudButton Text="Remover"
+                    IconClass="fa-solid fa-trash"
+                    Style="CrudButtonStyle.Remove"
+                    OnClick="@(_ => RemoverAsync(item.Id))"
+                    Disabled="@(editandoId == item.Id)" />
+        @if (editandoId == item.Id)
+        {
+            <CrudButton Text="Salvar" IconClass="fa-solid fa-floppy-disk" Style="CrudButtonStyle.Save" OnClick="@(_ => SalvarAsync())" />
+            <CrudButton Text="Cancelar" IconClass="fa-solid fa-xmark" Style="CrudButtonStyle.Cancel" OnClick="@(_ => Cancelar())" />
+        }
+    </ActionsTemplate>
+</CrudTable>
+
+@code {
+    private readonly IReadOnlyList<string> headers = ["Id", "Nome"];
+    private List<EmpresaFrequente> itens = [];
+    private string novoNome = string.Empty;
+    private Guid? editandoId;
+    private string editandoNome = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        itens = await Db.EmpresasFrequentes
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+    }
+
+    private async Task CadastrarAsync(MouseEventArgs _)
+    {
+        var nome = NormalizarNome(novoNome);
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            return;
+        }
+
+        var existe = await Db.EmpresasFrequentes.AnyAsync(x => x.Nome.ToUpper() == nome.ToUpper());
+        if (existe)
+        {
+            return;
+        }
+
+        Db.EmpresasFrequentes.Add(new EmpresaFrequente
+        {
+            Id = Guid.NewGuid(),
+            Nome = nome
+        });
+
+        await Db.SaveChangesAsync();
+        novoNome = string.Empty;
+        await CarregarAsync();
+    }
+
+    private void Editar(EmpresaFrequente item)
+    {
+        editandoId = item.Id;
+        editandoNome = item.Nome;
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (editandoId is null)
+        {
+            return;
+        }
+
+        var nome = NormalizarNome(editandoNome);
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            return;
+        }
+
+        var duplicado = await Db.EmpresasFrequentes
+            .AnyAsync(x => x.Id != editandoId.Value && x.Nome.ToUpper() == nome.ToUpper());
+        if (duplicado)
+        {
+            return;
+        }
+
+        var item = await Db.EmpresasFrequentes.FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+        if (item is null)
+        {
+            return;
+        }
+
+        item.Nome = nome;
+        await Db.SaveChangesAsync();
+        Cancelar();
+        await CarregarAsync();
+    }
+
+    private async Task RemoverAsync(Guid id)
+    {
+        var item = await Db.EmpresasFrequentes.FirstOrDefaultAsync(x => x.Id == id);
+        if (item is null)
+        {
+            return;
+        }
+
+        Db.EmpresasFrequentes.Remove(item);
+        await Db.SaveChangesAsync();
+
+        if (editandoId == id)
+        {
+            Cancelar();
+        }
+
+        await CarregarAsync();
+    }
+
+    private void Cancelar()
+    {
+        editandoId = null;
+        editandoNome = string.Empty;
+    }
+
+    private static string NormalizarNome(string? valor) => (valor ?? string.Empty).Trim();
+}

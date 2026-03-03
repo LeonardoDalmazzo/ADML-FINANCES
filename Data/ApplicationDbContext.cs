@@ -6,6 +6,7 @@ namespace ADML_FINANCES.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<CategoriaGasto> CategoriasGasto => Set<CategoriaGasto>();
+    public DbSet<EmpresaFrequente> EmpresasFrequentes => Set<EmpresaFrequente>();
     public DbSet<FormaPagamento> FormasPagamento => Set<FormaPagamento>();
     public DbSet<MovimentacaoFinanceira> MovimentacoesFinanceiras => Set<MovimentacaoFinanceira>();
     public DbSet<StatusPendencia> StatusPendencias => Set<StatusPendencia>();
@@ -56,6 +57,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             );
         });
 
+        builder.Entity<EmpresaFrequente>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Nome).HasMaxLength(150).IsRequired();
+            entity.HasIndex(x => x.Nome).IsUnique();
+        });
+
         builder.Entity<StatusPendencia>(entity =>
         {
             entity.HasKey(x => x.Id);
@@ -66,7 +74,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 new StatusPendencia { Id = Guid.Parse("8b3d30f4-d44e-45f7-b996-d8400e0a32e0"), Nome = "Recebido", Cor = "#3b82f6" },
                 new StatusPendencia { Id = Guid.Parse("7075cd4c-2f4f-499c-b538-d0c9124b1a8e"), Nome = "Pago", Cor = "#22c55e" },
                 new StatusPendencia { Id = Guid.Parse("8ea5d574-a363-47be-97b8-9ef15ce0fb1d"), Nome = "Aguardando", Cor = "#f59e0b" },
-                new StatusPendencia { Id = Guid.Parse("744768a3-0205-4da8-b51a-7a91684a35f3"), Nome = "Vencidado", Cor = "#ef4444" },
+                new StatusPendencia { Id = Guid.Parse("744768a3-0205-4da8-b51a-7a91684a35f3"), Nome = "Vencido", Cor = "#ef4444" },
                 new StatusPendencia { Id = Guid.Parse("c17a7b95-3240-4528-b062-dd0712bdd3c4"), Nome = "Urgente", Cor = "#dc2626" }
             );
         });
@@ -74,6 +82,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<MovimentacaoFinanceira>(entity =>
         {
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.TipoLancamento).HasMaxLength(20).IsRequired();
             entity.Property(x => x.Descricao).HasMaxLength(150).IsRequired();
             entity.Property(x => x.Valor).HasColumnType("decimal(18,2)");
             entity.Property(x => x.Usuario).HasMaxLength(120).IsRequired();
@@ -94,10 +103,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .HasForeignKey(x => x.StatusPendenciaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne(x => x.EmpresaFrequente)
+                .WithMany()
+                .HasForeignKey(x => x.EmpresaFrequenteId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasData(
                 new MovimentacaoFinanceira
                 {
                     Id = Guid.Parse("04f75ddb-6d10-4b11-a73e-cf5b686eb8e9"),
+                    TipoLancamento = "Pagar",
                     Descricao = "Curso de investimentos",
                     Valor = 297.90m,
                     DataLancamento = new DateTime(2026, 3, 1),
@@ -112,6 +127,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 new MovimentacaoFinanceira
                 {
                     Id = Guid.Parse("7b589280-b00e-4c32-a78b-0f7dd03cd696"),
+                    TipoLancamento = "Pagar",
                     Descricao = "Assinatura streaming",
                     Valor = 39.90m,
                     DataLancamento = new DateTime(2026, 3, 2),
@@ -126,6 +142,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 new MovimentacaoFinanceira
                 {
                     Id = Guid.Parse("3e16f6af-838a-4cb8-9516-b8d76fe1ca8a"),
+                    TipoLancamento = "Pagar",
                     Descricao = "Farmacia",
                     Valor = 124.77m,
                     DataLancamento = new DateTime(2026, 3, 2),
@@ -140,6 +157,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 new MovimentacaoFinanceira
                 {
                     Id = Guid.Parse("bdebdc58-65c8-453b-962d-f9002dc81e81"),
+                    TipoLancamento = "Pagar",
                     Descricao = "Mercado semanal",
                     Valor = 286.40m,
                     DataLancamento = new DateTime(2026, 3, 3),
