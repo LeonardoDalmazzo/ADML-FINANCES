@@ -1,8 +1,8 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ADML-FINANCES", "ADML-FINANCES\ADML-FINANCES.csproj", "{D7786B21-D950-BF04-97F9-DD720BF70A19}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ADML-FINANCES", "ADML-FINANCES.csproj", "{D7786B21-D950-BF04-97F9-DD720BF70A19}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,3 +22,4 @@ Global
 		SolutionGuid = {949B7BED-C126-474D-9D11-8A23CE7DAEE3}
 	EndGlobalSection
 EndGlobal
+
