@@ -1,0 +1,12 @@
+﻿# Build artifacts
+**/bin/
+**/obj/
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Database local
+ADML-FINANCES/Data/app.db
