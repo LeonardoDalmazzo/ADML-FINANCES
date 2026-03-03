@@ -8,37 +8,142 @@
         <p class="page-kicker">CONSULTA FINANCEIRA</p>
         <h1 class="page-title">Visualizacao de Lancamentos</h1>
         <p class="page-subtitle mb-0">
-            Filtre por categoria, forma de pagamento, status, usuario e periodo para analisar suas movimentacoes.
+            Cadastre contas a pagar e a receber, com suporte a lancamentos unicos e em lote.
         </p>
     </section>
 
     <div class="resumo-grid mb-3">
         <article class="resumo-card">
-            <p class="resumo-label">Total filtrado</p>
-            <p class="resumo-value">@TotalFiltrado.ToString("C")</p>
+            <p class="resumo-label">A pagar</p>
+            <p class="resumo-value text-danger">@TotalPagar.ToString("C")</p>
         </article>
         <article class="resumo-card">
-            <p class="resumo-label">Pago</p>
-            <p class="resumo-value text-success">@TotalPago.ToString("C")</p>
+            <p class="resumo-label">A receber</p>
+            <p class="resumo-value text-success">@TotalReceber.ToString("C")</p>
         </article>
         <article class="resumo-card">
-            <p class="resumo-label">Pendente</p>
-            <p class="resumo-value text-danger">@TotalPendente.ToString("C")</p>
+            <p class="resumo-label">Saldo previsto</p>
+            <p class="resumo-value @(SaldoPrevisto >= 0 ? "text-success" : "text-danger")">@SaldoPrevisto.ToString("C")</p>
         </article>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Novo lancamento</h2>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button type="button" class="btn @(cadastroEmLote ? "btn-outline-primary" : "btn-primary")" @onclick="@(() => cadastroEmLote = false)">Cadastro unico</button>
+                <button type="button" class="btn @(cadastroEmLote ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => cadastroEmLote = true)">Cadastro em lote</button>
+            </div>
+            <div class="row g-3">
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Tipo</label>
+                    <InputSelect class="form-select" @bind-Value="novoTipoLancamento">
+                        <option value="Pagar">A pagar</option>
+                        <option value="Receber">A receber</option>
+                    </InputSelect>
+                </div>
+                <div class="col-12 col-md-9">
+                    <label class="form-label">Descricao</label>
+                    <InputText class="form-control" @bind-Value="novoDescricao" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Valor</label>
+                    <input type="number" step="0.01" class="form-control" @bind="novoValor" />
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Categoria</label>
+                    <InputSelect class="form-select" @bind-Value="novoCategoriaId">
+                        @foreach (var categoria in categorias)
+                        {
+                            <option value="@categoria.Id">@categoria.Nome</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Metodo de pagamento</label>
+                    <InputSelect class="form-select" @bind-Value="novoFormaPagamentoId">
+                        @foreach (var forma in formasPagamento)
+                        {
+                            <option value="@forma.Id">@forma.Nome</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Status</label>
+                    <InputSelect class="form-select" @bind-Value="novoStatusId">
+                        @foreach (var status in statusPendencias)
+                        {
+                            <option value="@status.Id">@status.Nome</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Empresa (opcional)</label>
+                    <InputText class="form-control" list="empresas-lista" @bind-Value="novoEmpresaNome" placeholder="Opcional" />
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Observacao</label>
+                    <InputText class="form-control" @bind-Value="novoObservacao" />
+                </div>
+                @if (cadastroEmLote)
+                {
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Quantidade</label>
+                        <input type="number" min="1" class="form-control" @bind="novoQuantidadeLote" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Mes inicial</label>
+                        <InputDate class="form-control" @bind-Value="novoMesInicial" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Mes final (opcional)</label>
+                        <InputDate class="form-control" @bind-Value="novoMesFinal" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Data pagamento base</label>
+                        <InputDate class="form-control" @bind-Value="novoDataPagamentoBase" />
+                    </div>
+                }
+                else
+                {
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Data lancamento</label>
+                        <InputDate class="form-control" @bind-Value="novoDataLancamento" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Vencimento</label>
+                        <InputDate class="form-control" @bind-Value="novoDataVencimento" />
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Pagamento</label>
+                        <InputDate class="form-control" @bind-Value="novoDataPagamento" />
+                    </div>
+                }
+            </div>
+            <div class="mt-3 d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-success" @onclick="CadastrarAsync">Cadastrar</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="LimparFormulario">Limpar formulario</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(mensagemCadastro))
+            {
+                <p class="small mt-2 mb-0 text-muted">@mensagemCadastro</p>
+            }
+        </div>
     </div>
 
     <div class="card mb-3">
         <div class="card-body">
             <h2 class="h5 mb-3">Colunas visiveis</h2>
             <div class="row g-2">
+                <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarTipo" />Tipo</label></div>
                 <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarDescricao" />Descricao</label></div>
+                <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarEmpresa" />Empresa</label></div>
                 <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarCategoria" />Categoria</label></div>
                 <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarForma" />Metodo de pagamento</label></div>
                 <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarStatus" />Status</label></div>
                 <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarValor" />Valor</label></div>
                 <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarVencimento" />Vencimento</label></div>
                 <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarPagamento" />Pagamento</label></div>
-                <div class="col-6 col-md-3"><label class="form-check-label d-flex align-items-center gap-2"><InputCheckbox class="form-check-input" @bind-Value="mostrarUsuario" />Usuario</label></div>
             </div>
         </div>
     </div>
@@ -51,6 +156,14 @@
                     <InputText class="form-control" @bind-Value="pesquisa" placeholder="Descricao ou observacao" />
                 </div>
                 <div class="col-12 col-md-3">
+                    <label class="form-label">Tipo</label>
+                    <InputSelect class="form-select" @bind-Value="tipoLancamentoFiltro">
+                        <option value="">Todos</option>
+                        <option value="Pagar">A pagar</option>
+                        <option value="Receber">A receber</option>
+                    </InputSelect>
+                </div>
+                <div class="col-12 col-md-3">
                     <label class="form-label">Categoria</label>
                     <InputSelect class="form-select" @bind-Value="categoriaId">
                         <option value="">Todas</option>
@@ -61,7 +174,7 @@
                     </InputSelect>
                 </div>
                 <div class="col-12 col-md-3">
-                    <label class="form-label">Forma de pagamento</label>
+                    <label class="form-label">Metodo de pagamento</label>
                     <InputSelect class="form-select" @bind-Value="formaPagamentoId">
                         <option value="">Todas</option>
                         @foreach (var forma in formasPagamento)
@@ -81,14 +194,8 @@
                     </InputSelect>
                 </div>
                 <div class="col-12 col-md-3">
-                    <label class="form-label">Usuario</label>
-                    <InputSelect class="form-select" @bind-Value="usuarioSelecionado">
-                        <option value="">Todos</option>
-                        @foreach (var usuario in usuarios)
-                        {
-                            <option value="@usuario">@usuario</option>
-                        }
-                    </InputSelect>
+                    <label class="form-label">Empresa</label>
+                    <InputText class="form-control" list="empresas-lista" @bind-Value="empresaSelecionada" placeholder="Opcional" />
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label">Ordenar por</label>
@@ -126,14 +233,16 @@
         <table class="table table-striped table-hover visualizacao-table">
             <thead>
                 <tr>
+                    @if (mostrarTipo) { <th class="col-base">Tipo</th> }
                     @if (mostrarDescricao) { <th class="col-descricao">Descricao</th> }
+                    @if (mostrarEmpresa) { <th class="col-base">Empresa</th> }
                     @if (mostrarCategoria) { <th class="col-base">Categoria</th> }
                     @if (mostrarForma) { <th class="col-base">Metodo de pagamento</th> }
                     @if (mostrarStatus) { <th class="col-base">Status</th> }
                     @if (mostrarValor) { <th class="col-valor">Valor</th> }
                     @if (mostrarVencimento) { <th class="col-data">Vencimento</th> }
                     @if (mostrarPagamento) { <th class="col-data">Pagamento</th> }
-                    @if (mostrarUsuario) { <th class="col-base">Usuario</th> }
+                    <th class="col-acoes">Acoes</th>
                 </tr>
             </thead>
             <tbody>
@@ -148,21 +257,166 @@
                     @foreach (var item in movimentacoes)
                     {
                         <tr>
-                            @if (mostrarDescricao) { <td class="col-descricao">@item.Descricao</td> }
-                            @if (mostrarCategoria) { <td>@item.CategoriaGasto?.Nome</td> }
-                            @if (mostrarForma) { <td>@item.FormaPagamento?.Nome</td> }
+                            @if (mostrarTipo)
+                            {
+                                <td>
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <InputSelect class="form-select form-select-sm" @bind-Value="editandoTipoLancamento">
+                                            <option value="Pagar">A pagar</option>
+                                            <option value="Receber">A receber</option>
+                                        </InputSelect>
+                                    }
+                                    else
+                                    {
+                                        <span class="tipo-icon @(item.TipoLancamento == "Receber" ? "tipo-receber" : "tipo-pagar")"
+                                              title="@(item.TipoLancamento == "Receber" ? "A receber" : "A pagar")"
+                                              aria-label="@(item.TipoLancamento == "Receber" ? "A receber" : "A pagar")">
+                                            @(item.TipoLancamento == "Receber" ? "↙" : "↗")
+                                        </span>
+                                    }
+                                </td>
+                            }
+                            @if (mostrarDescricao)
+                            {
+                                <td class="col-descricao">
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <input class="form-control form-control-sm" @bind="editandoDescricao" />
+                                    }
+                                    else
+                                    {
+                                        @item.Descricao
+                                    }
+                                </td>
+                            }
+                            @if (mostrarEmpresa)
+                            {
+                                <td>
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <InputText class="form-control form-control-sm" list="empresas-lista" @bind-Value="editandoEmpresaNome" />
+                                    }
+                                    else
+                                    {
+                                        @(item.EmpresaFrequente?.Nome ?? "-")
+                                    }
+                                </td>
+                            }
+                            @if (mostrarCategoria)
+                            {
+                                <td>
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <InputSelect class="form-select form-select-sm" @bind-Value="editandoCategoriaId">
+                                            @foreach (var categoria in categorias)
+                                            {
+                                                <option value="@categoria.Id">@categoria.Nome</option>
+                                            }
+                                        </InputSelect>
+                                    }
+                                    else
+                                    {
+                                        @item.CategoriaGasto?.Nome
+                                    }
+                                </td>
+                            }
+                            @if (mostrarForma)
+                            {
+                                <td>
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <InputSelect class="form-select form-select-sm" @bind-Value="editandoFormaPagamentoId">
+                                            @foreach (var forma in formasPagamento)
+                                            {
+                                                <option value="@forma.Id">@forma.Nome</option>
+                                            }
+                                        </InputSelect>
+                                    }
+                                    else
+                                    {
+                                        @item.FormaPagamento?.Nome
+                                    }
+                                </td>
+                            }
                             @if (mostrarStatus)
                             {
                                 <td>
-                                    <span class="status-pill" style="background-color:@(item.StatusPendencia?.Cor ?? "#dbeafe")">
-                                        @item.StatusPendencia?.Nome
-                                    </span>
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <InputSelect class="form-select form-select-sm" @bind-Value="editandoStatusId">
+                                            @foreach (var status in statusPendencias)
+                                            {
+                                                <option value="@status.Id">@status.Nome</option>
+                                            }
+                                        </InputSelect>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-texto" style="color:@(item.StatusPendencia?.Cor ?? "#334155")">
+                                            @item.StatusPendencia?.Nome
+                                        </span>
+                                    }
                                 </td>
                             }
-                            @if (mostrarValor) { <td class="col-valor">@item.Valor.ToString("C")</td> }
-                            @if (mostrarVencimento) { <td>@item.DataVencimento.ToString("dd/MM/yyyy")</td> }
-                            @if (mostrarPagamento) { <td>@(item.DataPagamento?.ToString("dd/MM/yyyy") ?? "-")</td> }
-                            @if (mostrarUsuario) { <td>@item.Usuario</td> }
+                            @if (mostrarValor)
+                            {
+                                <td class="col-valor">
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <input type="number" step="0.01" class="form-control form-control-sm" @bind="editandoValor" />
+                                    }
+                                    else
+                                    {
+                                        @item.Valor.ToString("C")
+                                    }
+                                </td>
+                            }
+                            @if (mostrarVencimento)
+                            {
+                                <td>
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <InputDate class="form-control form-control-sm" @bind-Value="editandoDataVencimento" />
+                                    }
+                                    else
+                                    {
+                                        @item.DataVencimento.ToString("dd/MM/yyyy")
+                                    }
+                                </td>
+                            }
+                            @if (mostrarPagamento)
+                            {
+                                <td>
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <InputDate class="form-control form-control-sm" @bind-Value="editandoDataPagamento" />
+                                    }
+                                    else
+                                    {
+                                        @(item.DataPagamento?.ToString("dd/MM/yyyy") ?? "-")
+                                    }
+                                </td>
+                            }
+                            <td class="col-acoes">
+                                <div class="acoes-wrap">
+                                    <CrudButton Text="Editar"
+                                                IconClass="fa-solid fa-pen-to-square"
+                                                Style="CrudButtonStyle.Edit"
+                                                OnClick="@(_ => Editar(item))"
+                                                Disabled="@(editandoId == item.Id)" />
+                                    <CrudButton Text="Remover"
+                                                IconClass="fa-solid fa-trash"
+                                                Style="CrudButtonStyle.Remove"
+                                                OnClick="@(_ => RemoverAsync(item.Id))"
+                                                Disabled="@(editandoId == item.Id)" />
+                                    @if (editandoId == item.Id)
+                                    {
+                                        <CrudButton Text="Salvar" IconClass="fa-solid fa-floppy-disk" Style="CrudButtonStyle.Save" OnClick="@(_ => SalvarAsync())" />
+                                        <CrudButton Text="Cancelar" IconClass="fa-solid fa-xmark" Style="CrudButtonStyle.Cancel" OnClick="@(_ => Cancelar())" />
+                                    }
+                                </div>
+                            </td>
                         </tr>
                     }
                 }
@@ -170,3 +424,10 @@
         </table>
     </div>
 </div>
+
+<datalist id="empresas-lista">
+    @foreach (var empresa in empresasFrequentes)
+    {
+        <option value="@empresa.Nome"></option>
+    }
+</datalist>

@@ -90,13 +90,32 @@
     white-space: nowrap;
 }
 
-.status-pill {
-    border-radius: 999px;
-    color: #0f172a;
-    display: inline-block;
-    font-size: 0.75rem;
+.visualizacao-table .col-acoes {
+    min-width: 290px;
+    white-space: nowrap;
+}
+
+.acoes-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.status-texto {
+    font-size: 0.83rem;
     font-weight: 700;
-    padding: 0.28rem 0.65rem;
+}
+
+.tipo-pagar {
+    color: #b91c1c;
+}
+
+.tipo-receber {
+    color: #15803d;
+}
+
+.tipo-icon {
+    font-size: 0.95rem;
 }
 
 @media (min-width: 768px) {
