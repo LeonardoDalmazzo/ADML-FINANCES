@@ -3,16 +3,19 @@ using System;
 using ADML_FINANCES.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ADML_FINANCES.Migrations
+namespace ADML_FINANCES.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260303131813_SyncPendingModel")]
+    partial class SyncPendingModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
@@ -173,113 +176,6 @@ namespace ADML_FINANCES.Migrations
                             Descricao = "Pagamento via cartao com faturamento.",
                             Nome = "Cartao de credito",
                             Situacao = true
-                        });
-                });
-
-            modelBuilder.Entity("ADML_FINANCES.Data.MovimentacaoFinanceira", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("CategoriaGastoId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("DataLancamento")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("DataPagamento")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("DataVencimento")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("FormaPagamentoId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Observacao")
-                        .HasMaxLength(300)
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("StatusPendenciaId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Usuario")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Valor")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoriaGastoId");
-
-                    b.HasIndex("FormaPagamentoId");
-
-                    b.HasIndex("StatusPendenciaId");
-
-                    b.ToTable("MovimentacoesFinanceiras");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("04f75ddb-6d10-4b11-a73e-cf5b686eb8e9"),
-                            CategoriaGastoId = new Guid("97cdac35-773f-4725-a48f-4e7403ef0563"),
-                            DataLancamento = new DateTime(2026, 3, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DataVencimento = new DateTime(2026, 3, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Descricao = "Curso de investimentos",
-                            FormaPagamentoId = new Guid("19c2abfd-e8bc-4450-8ecb-fec0f5f236b4"),
-                            Observacao = "Parcela unica.",
-                            StatusPendenciaId = new Guid("8ea5d574-a363-47be-97b8-9ef15ce0fb1d"),
-                            Usuario = "admin@finances.com",
-                            Valor = 297.90m
-                        },
-                        new
-                        {
-                            Id = new Guid("7b589280-b00e-4c32-a78b-0f7dd03cd696"),
-                            CategoriaGastoId = new Guid("34fc3fa5-fe66-4f3f-9966-6a87248eaa75"),
-                            DataLancamento = new DateTime(2026, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DataPagamento = new DateTime(2026, 3, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DataVencimento = new DateTime(2026, 3, 5, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Descricao = "Assinatura streaming",
-                            FormaPagamentoId = new Guid("ad293e8f-b852-443a-8dd4-6f39a7baafe1"),
-                            Observacao = "Recorrente.",
-                            StatusPendenciaId = new Guid("7075cd4c-2f4f-499c-b538-d0c9124b1a8e"),
-                            Usuario = "admin@finances.com",
-                            Valor = 39.90m
-                        },
-                        new
-                        {
-                            Id = new Guid("3e16f6af-838a-4cb8-9516-b8d76fe1ca8a"),
-                            CategoriaGastoId = new Guid("e56c9989-8116-4f86-ba0a-86d0f0e4c8d7"),
-                            DataLancamento = new DateTime(2026, 3, 2, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DataVencimento = new DateTime(2026, 3, 4, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Descricao = "Farmacia",
-                            FormaPagamentoId = new Guid("ad293e8f-b852-443a-8dd4-6f39a7baafe1"),
-                            Observacao = "Medicamentos continuos.",
-                            StatusPendenciaId = new Guid("c17a7b95-3240-4528-b062-dd0712bdd3c4"),
-                            Usuario = "admin@finances.com",
-                            Valor = 124.77m
-                        },
-                        new
-                        {
-                            Id = new Guid("bdebdc58-65c8-453b-962d-f9002dc81e81"),
-                            CategoriaGastoId = new Guid("14f3d711-40cd-44c3-8697-9159e50dce53"),
-                            DataLancamento = new DateTime(2026, 3, 3, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            DataVencimento = new DateTime(2026, 3, 8, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Descricao = "Mercado semanal",
-                            FormaPagamentoId = new Guid("ad293e8f-b852-443a-8dd4-6f39a7baafe1"),
-                            Observacao = "Compras da semana.",
-                            StatusPendenciaId = new Guid("8b3d30f4-d44e-45f7-b996-d8400e0a32e0"),
-                            Usuario = "admin@finances.com",
-                            Valor = 286.40m
                         });
                 });
 
@@ -483,33 +379,6 @@ namespace ADML_FINANCES.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ADML_FINANCES.Data.MovimentacaoFinanceira", b =>
-                {
-                    b.HasOne("ADML_FINANCES.Data.CategoriaGasto", "CategoriaGasto")
-                        .WithMany()
-                        .HasForeignKey("CategoriaGastoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ADML_FINANCES.Data.FormaPagamento", "FormaPagamento")
-                        .WithMany()
-                        .HasForeignKey("FormaPagamentoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ADML_FINANCES.Data.StatusPendencia", "StatusPendencia")
-                        .WithMany()
-                        .HasForeignKey("StatusPendenciaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CategoriaGasto");
-
-                    b.Navigation("FormaPagamento");
-
-                    b.Navigation("StatusPendencia");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
