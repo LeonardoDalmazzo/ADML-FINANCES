@@ -71,6 +71,25 @@
     padding-bottom: 0.5rem;
 }
 
+.submenu-item {
+    padding-left: 2.2rem;
+}
+
+.menu-toggle {
+    justify-content: flex-start;
+}
+
+.menu-indicator {
+    margin-left: auto;
+    margin-right: 0.25rem;
+}
+
+.nav-link i {
+    width: 1.25rem;
+    margin-right: 0.75rem;
+    text-align: center;
+}
+
     .nav-item:first-of-type {
         padding-top: 1rem;
     }

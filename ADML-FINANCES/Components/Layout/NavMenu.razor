@@ -1,4 +1,5 @@
 ﻿@implements IDisposable
+@rendermode InteractiveServer
 
 @inject NavigationManager NavigationManager
 
@@ -10,25 +11,52 @@
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div class="nav-scrollable">
     <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
-
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="about">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i> About
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="visualizacao">
+                        <i class="fa-solid fa-chart-column" aria-hidden="true"></i> Visualizacao
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <button type="button" class="nav-link menu-toggle" @onclick="ToggleGerenciarMenu">
+                        <i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i> Gerenciar
+                        <i class="fa-solid @(isGerenciarMenuOpen ? "fa-chevron-up" : "fa-chevron-down") menu-indicator" aria-hidden="true"></i>
+                    </button>
+                </div>
+                @if (isGerenciarMenuOpen)
+                {
+                    <div class="nav-item px-3 submenu-item">
+                        <NavLink class="nav-link" href="gerenciar/formas-pagamento">
+                            <i class="fa-solid fa-credit-card" aria-hidden="true"></i> Formas de Pagamento
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3 submenu-item">
+                        <NavLink class="nav-link" href="gerenciar/categorias-gasto">
+                            <i class="fa-solid fa-receipt" aria-hidden="true"></i> Categorias de gasto
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3 submenu-item">
+                        <NavLink class="nav-link" href="gerenciar/status-pendencias">
+                            <i class="fa-solid fa-list-check" aria-hidden="true"></i> Status de pendencias
+                        </NavLink>
+                    </div>
+                }
+                <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                        <i class="fa-solid fa-gear" aria-hidden="true"></i> Configurações
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
@@ -59,6 +87,7 @@
 
 @code {
     private string? currentUrl;
+    private bool isGerenciarMenuOpen;
 
     protected override void OnInitialized()
     {
@@ -72,10 +101,17 @@
         StateHasChanged();
     }
 
+    private void ToggleGerenciarMenu()
+    {
+        isGerenciarMenuOpen = !isGerenciarMenuOpen;
+    }
+
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
+
+
 
 

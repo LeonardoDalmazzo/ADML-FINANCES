@@ -1,0 +1,56 @@
+@typeparam TItem
+
+<table class="table app-crud-table">
+    <thead>
+        <tr>
+            @foreach (var header in Headers)
+            {
+                <th>@header</th>
+            }
+            @if (ActionsTemplate is not null)
+            {
+                <th class="col-actions">Ação</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @if (Items.Any())
+        {
+            @foreach (var item in Items)
+            {
+                <tr>
+                    @RowTemplate(item)
+                    @if (ActionsTemplate is not null)
+                    {
+                        <td class="col-actions">@ActionsTemplate(item)</td>
+                    }
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="@ColumnCount" class="empty-row">@EmptyMessage</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<string> Headers { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public IEnumerable<TItem> Items { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> RowTemplate { get; set; } = default!;
+
+    [Parameter]
+    public RenderFragment<TItem>? ActionsTemplate { get; set; }
+
+    [Parameter]
+    public string EmptyMessage { get; set; } = "Nenhum registro encontrado.";
+
+    private int ColumnCount => Headers.Count + (ActionsTemplate is null ? 0 : 1);
+}

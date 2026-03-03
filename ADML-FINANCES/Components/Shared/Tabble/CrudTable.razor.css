@@ -1,0 +1,42 @@
+.app-crud-table {
+    --table-border: #d9e0e8;
+    --table-head-bg: #edf2f7;
+    --table-row-alt: #f8fafc;
+    border: 1px solid var(--table-border);
+    border-collapse: separate;
+    border-radius: 0.65rem;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+.app-crud-table thead th {
+    background-color: var(--table-head-bg);
+    border-bottom: 1px solid var(--table-border);
+    color: #24303d;
+    font-size: 0.86rem;
+    font-weight: 700;
+    padding: 0.75rem;
+}
+
+.app-crud-table tbody td {
+    border-bottom: 1px solid var(--table-border);
+    font-size: 0.9rem;
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.app-crud-table tbody tr:nth-child(even) td {
+    background-color: var(--table-row-alt);
+}
+
+.app-crud-table .col-actions {
+    min-width: 245px;
+    width: 245px;
+    white-space: nowrap;
+}
+
+.app-crud-table .empty-row {
+    color: #5d6a78;
+    font-style: italic;
+    text-align: center;
+}

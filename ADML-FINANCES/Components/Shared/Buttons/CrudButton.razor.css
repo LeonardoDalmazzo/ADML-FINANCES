@@ -1,0 +1,53 @@
+.crud-btn {
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-right: 0.35rem;
+    padding: 0.45rem 0.65rem;
+    transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.crud-btn:last-child {
+    margin-right: 0;
+}
+
+.crud-btn:hover {
+    filter: brightness(1.08);
+}
+
+.crud-btn:active {
+    transform: translateY(1px);
+}
+
+.crud-btn:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.25);
+    opacity: 0.65;
+}
+
+.crud-btn-create {
+    background-color: #0d6efd;
+}
+
+.crud-btn-edit {
+    background-color: #0a7d40;
+}
+
+.crud-btn-remove {
+    background-color: #bb2d3b;
+}
+
+.crud-btn-save {
+    background-color: #198754;
+}
+
+.crud-btn-cancel {
+    background-color: #6c757d;
+}
