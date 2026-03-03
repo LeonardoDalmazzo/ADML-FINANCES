@@ -10,3 +10,5 @@
 
 # Database local
 ADML-FINANCES/Data/app.db
+ADML-FINANCES/Data/app.db-shm
+ADML-FINANCES/Data/app.db-wal
