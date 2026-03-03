@@ -1,0 +1,207 @@
+@page "/gerenciar/formas-pagamento"
+@rendermode InteractiveServer
+@using ADML_FINANCES.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Db
+
+<PageTitle>Formas de Pagamento</PageTitle>
+
+<h1>Formas de Pagamento</h1>
+
+<div class="mb-3 d-flex gap-2 align-items-center">
+    <input class="form-control" placeholder="Nome da forma de pagamento" @bind="novoNome" />
+    <input class="form-control" placeholder="Descricao" @bind="novaDescricao" />
+    <input type="color" class="form-control form-control-color" @bind="novaCor" title="Cor da forma de pagamento" />
+    <select class="form-select" @bind="novaSituacaoTexto" style="max-width: 160px;">
+        <option value="Ativo">Ativo</option>
+        <option value="Desativo">Desativo</option>
+    </select>
+    <CrudButton Text="Cadastrar" IconClass="fa-solid fa-plus" Style="CrudButtonStyle.Create" OnClick="CadastrarAsync" />
+</div>
+
+<CrudTable TItem="FormaPagamento"
+           Headers="headers"
+           Items="itens">
+    <RowTemplate Context="item">
+        <td>@item.Id</td>
+        <td>
+            @if (editandoId == item.Id)
+            {
+                <input class="form-control form-control-sm" @bind="editandoNome" />
+            }
+            else
+            {
+                @item.Nome
+            }
+        </td>
+        <td>
+            @if (editandoId == item.Id)
+            {
+                <input class="form-control form-control-sm" @bind="editandoDescricao" />
+            }
+            else
+            {
+                @item.Descricao
+            }
+        </td>
+        <td>
+            @if (editandoId == item.Id)
+            {
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="color" class="form-control form-control-color" @bind="editandoCor" />
+                    <input class="form-control form-control-sm" maxlength="7" @bind="editandoCor" />
+                </div>
+            }
+            else
+            {
+                <span class="badge text-dark border" style="background-color:@item.Cor">@item.Cor</span>
+            }
+        </td>
+        <td>
+            @if (editandoId == item.Id)
+            {
+                <select class="form-select form-select-sm" @bind="editandoSituacaoTexto" style="max-width: 120px;">
+                    <option value="Ativo">Ativo</option>
+                    <option value="Desativo">Desativo</option>
+                </select>
+            }
+            else
+            {
+                @(item.Situacao ? "Ativo" : "Desativo")
+            }
+        </td>
+    </RowTemplate>
+    <ActionsTemplate Context="item">
+        <CrudButton Text="Editar"
+                    IconClass="fa-solid fa-pen-to-square"
+                    Style="CrudButtonStyle.Edit"
+                    OnClick="@(_ => Editar(item))"
+                    Disabled="@(editandoId == item.Id)" />
+        <CrudButton Text="Remover"
+                    IconClass="fa-solid fa-trash"
+                    Style="CrudButtonStyle.Remove"
+                    OnClick="@(_ => RemoverAsync(item.Id))"
+                    Disabled="@(editandoId == item.Id)" />
+        @if (editandoId == item.Id)
+        {
+            <CrudButton Text="Salvar" IconClass="fa-solid fa-floppy-disk" Style="CrudButtonStyle.Save" OnClick="@(_ => SalvarAsync())" />
+            <CrudButton Text="Cancelar" IconClass="fa-solid fa-xmark" Style="CrudButtonStyle.Cancel" OnClick="@(_ => Cancelar())" />
+        }
+    </ActionsTemplate>
+</CrudTable>
+
+@code {
+    private readonly IReadOnlyList<string> headers = ["Id", "Nome", "Descricao", "Cor", "Situacao"];
+    private List<FormaPagamento> itens = [];
+    private string novoNome = string.Empty;
+    private string novaDescricao = string.Empty;
+    private string novaCor = "#0d6efd";
+    private string novaSituacaoTexto = "Ativo";
+    private Guid? editandoId;
+    private string editandoNome = string.Empty;
+    private string editandoDescricao = string.Empty;
+    private string editandoCor = "#0d6efd";
+    private string editandoSituacaoTexto = "Ativo";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        itens = await Db.FormasPagamento
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+    }
+
+    private async Task CadastrarAsync(MouseEventArgs _)
+    {
+        if (string.IsNullOrWhiteSpace(novoNome) || string.IsNullOrWhiteSpace(novaDescricao) || !EhCorHexValida(novaCor))
+        {
+            return;
+        }
+
+        Db.FormasPagamento.Add(new FormaPagamento
+        {
+            Id = Guid.NewGuid(),
+            Nome = novoNome.Trim(),
+            Descricao = novaDescricao.Trim(),
+            Cor = novaCor.ToUpperInvariant(),
+            Situacao = novaSituacaoTexto == "Ativo"
+        });
+
+        await Db.SaveChangesAsync();
+        novoNome = string.Empty;
+        novaDescricao = string.Empty;
+        novaCor = "#0d6efd";
+        novaSituacaoTexto = "Ativo";
+        await CarregarAsync();
+    }
+
+    private void Editar(FormaPagamento item)
+    {
+        editandoId = item.Id;
+        editandoNome = item.Nome;
+        editandoDescricao = item.Descricao;
+        editandoCor = item.Cor;
+        editandoSituacaoTexto = item.Situacao ? "Ativo" : "Desativo";
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (editandoId is null || string.IsNullOrWhiteSpace(editandoNome) || string.IsNullOrWhiteSpace(editandoDescricao) || !EhCorHexValida(editandoCor))
+        {
+            return;
+        }
+
+        var item = await Db.FormasPagamento.FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+        if (item is null)
+        {
+            return;
+        }
+
+        item.Nome = editandoNome.Trim();
+        item.Descricao = editandoDescricao.Trim();
+        item.Cor = editandoCor.ToUpperInvariant();
+        item.Situacao = editandoSituacaoTexto == "Ativo";
+
+        await Db.SaveChangesAsync();
+        Cancelar();
+        await CarregarAsync();
+    }
+
+    private async Task RemoverAsync(Guid id)
+    {
+        var item = await Db.FormasPagamento.FirstOrDefaultAsync(x => x.Id == id);
+        if (item is null)
+        {
+            return;
+        }
+
+        Db.FormasPagamento.Remove(item);
+        await Db.SaveChangesAsync();
+
+        if (editandoId == id)
+        {
+            Cancelar();
+        }
+
+        await CarregarAsync();
+    }
+
+    private void Cancelar()
+    {
+        editandoId = null;
+        editandoNome = string.Empty;
+        editandoDescricao = string.Empty;
+        editandoCor = "#0d6efd";
+        editandoSituacaoTexto = "Ativo";
+    }
+
+    private static bool EhCorHexValida(string cor) =>
+        System.Text.RegularExpressions.Regex.IsMatch(
+            cor,
+            "^#[0-9A-Fa-f]{6}$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+}

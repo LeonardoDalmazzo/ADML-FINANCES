@@ -1,0 +1,165 @@
+@page "/gerenciar/status-pendencias"
+@rendermode InteractiveServer
+@using ADML_FINANCES.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Db
+
+<PageTitle>Status de Pendencias</PageTitle>
+
+<h1>Status de Pendencias</h1>
+
+<div class="mb-3 d-flex gap-2 align-items-center">
+    <input class="form-control" placeholder="Novo status de pendencia" @bind="novoNome" />
+    <input type="color" class="form-control form-control-color" @bind="novaCor" title="Escolha a cor do status" />
+    <input class="form-control" placeholder="#RRGGBB" maxlength="7" @bind="novaCor" />
+    <CrudButton Text="Cadastrar" IconClass="fa-solid fa-plus" Style="CrudButtonStyle.Create" OnClick="CadastrarAsync" />
+</div>
+
+<CrudTable TItem="StatusPendencia"
+           Headers="headers"
+           Items="itens">
+    <RowTemplate Context="item">
+        <td>@item.Id</td>
+        <td>
+            @if (editandoId == item.Id)
+            {
+                <input class="form-control form-control-sm" @bind="editandoNome" />
+            }
+            else
+            {
+                @item.Nome
+            }
+        </td>
+        <td>
+            @if (editandoId == item.Id)
+            {
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="color" class="form-control form-control-color" @bind="editandoCor" />
+                    <input class="form-control form-control-sm" maxlength="7" @bind="editandoCor" />
+                </div>
+            }
+            else
+            {
+                <span class="badge text-dark border" style="background-color:@item.Cor">@item.Cor</span>
+            }
+        </td>
+    </RowTemplate>
+    <ActionsTemplate Context="item">
+        <CrudButton Text="Editar"
+                    IconClass="fa-solid fa-pen-to-square"
+                    Style="CrudButtonStyle.Edit"
+                    OnClick="@(_ => Editar(item))"
+                    Disabled="@(editandoId == item.Id)" />
+        <CrudButton Text="Remover"
+                    IconClass="fa-solid fa-trash"
+                    Style="CrudButtonStyle.Remove"
+                    OnClick="@(_ => RemoverAsync(item.Id))"
+                    Disabled="@(editandoId == item.Id)" />
+        @if (editandoId == item.Id)
+        {
+            <CrudButton Text="Salvar" IconClass="fa-solid fa-floppy-disk" Style="CrudButtonStyle.Save" OnClick="@(_ => SalvarAsync())" />
+            <CrudButton Text="Cancelar" IconClass="fa-solid fa-xmark" Style="CrudButtonStyle.Cancel" OnClick="@(_ => Cancelar())" />
+        }
+    </ActionsTemplate>
+</CrudTable>
+
+@code {
+    private readonly IReadOnlyList<string> headers = ["Id", "Nome", "Cor"];
+    private List<StatusPendencia> itens = [];
+    private string novoNome = string.Empty;
+    private string novaCor = "#3b82f6";
+    private Guid? editandoId;
+    private string editandoNome = string.Empty;
+    private string editandoCor = "#3b82f6";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        itens = await Db.StatusPendencias
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+    }
+
+    private async Task CadastrarAsync(MouseEventArgs _)
+    {
+        if (string.IsNullOrWhiteSpace(novoNome) || !EhCorHexValida(novaCor))
+        {
+            return;
+        }
+
+        Db.StatusPendencias.Add(new StatusPendencia
+        {
+            Id = Guid.NewGuid(),
+            Nome = novoNome.Trim(),
+            Cor = novaCor.ToUpperInvariant()
+        });
+
+        await Db.SaveChangesAsync();
+        novoNome = string.Empty;
+        await CarregarAsync();
+    }
+
+    private void Editar(StatusPendencia item)
+    {
+        editandoId = item.Id;
+        editandoNome = item.Nome;
+        editandoCor = item.Cor;
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (editandoId is null || string.IsNullOrWhiteSpace(editandoNome) || !EhCorHexValida(editandoCor))
+        {
+            return;
+        }
+
+        var item = await Db.StatusPendencias.FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+        if (item is null)
+        {
+            return;
+        }
+
+        item.Nome = editandoNome.Trim();
+        item.Cor = editandoCor.ToUpperInvariant();
+
+        await Db.SaveChangesAsync();
+        Cancelar();
+        await CarregarAsync();
+    }
+
+    private async Task RemoverAsync(Guid id)
+    {
+        var item = await Db.StatusPendencias.FirstOrDefaultAsync(x => x.Id == id);
+        if (item is null)
+        {
+            return;
+        }
+
+        Db.StatusPendencias.Remove(item);
+        await Db.SaveChangesAsync();
+
+        if (editandoId == id)
+        {
+            Cancelar();
+        }
+
+        await CarregarAsync();
+    }
+
+    private void Cancelar()
+    {
+        editandoId = null;
+        editandoNome = string.Empty;
+        editandoCor = "#3b82f6";
+    }
+
+    private static bool EhCorHexValida(string cor) =>
+        System.Text.RegularExpressions.Regex.IsMatch(
+            cor,
+            "^#[0-9A-Fa-f]{6}$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+}
