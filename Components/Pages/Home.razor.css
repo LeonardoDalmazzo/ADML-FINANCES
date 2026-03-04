@@ -1,0 +1,125 @@
+.home-page {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.hero {
+    border-radius: 1rem;
+    padding: 2rem;
+    color: #fff;
+    background:
+        radial-gradient(circle at 10% 10%, #7c3aed 0, transparent 32%),
+        radial-gradient(circle at 90% 0%, #0ea5e9 0, transparent 34%),
+        linear-gradient(145deg, #1e1b4b, #312e81);
+}
+
+.kicker {
+    letter-spacing: 0.2em;
+    font-size: 0.72rem;
+    margin-bottom: 0.55rem;
+    opacity: 0.8;
+}
+
+.hero h1 {
+    margin: 0;
+    max-width: 24ch;
+}
+
+.subtitle {
+    margin-top: 0.85rem;
+    max-width: 62ch;
+    opacity: 0.95;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.quick-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.quick-card {
+    border: 1px solid #d8dce8;
+    border-radius: 0.85rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.quick-card h2 {
+    margin-top: 0;
+    font-size: 1.05rem;
+}
+
+.quick-card p {
+    margin-bottom: 0.75rem;
+    color: #4b5563;
+}
+
+.quick-card a {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.flow {
+    border: 1px solid #d8dce8;
+    border-radius: 0.85rem;
+    padding: 1rem;
+    background: linear-gradient(180deg, #ffffff, #f8faff);
+}
+
+.flow h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+}
+
+.flow-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.flow-grid div {
+    border: 1px dashed #c7d2fe;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    background: #fff;
+}
+
+.flow-grid span {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #4338ca;
+    margin-bottom: 0.45rem;
+}
+
+.flow-grid p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 991.98px) {
+    .quick-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .flow-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .hero {
+        padding: 1.25rem;
+    }
+
+    .flow-grid {
+        grid-template-columns: 1fr;
+    }
+}

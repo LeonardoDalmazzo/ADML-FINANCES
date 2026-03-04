@@ -1,0 +1,79 @@
+.about-page {
+    display: grid;
+    gap: 1rem;
+}
+
+.about-hero {
+    border-radius: 1rem;
+    padding: 1.6rem;
+    background: linear-gradient(130deg, #0f172a, #1e3a8a);
+    color: #fff;
+}
+
+.about-kicker {
+    margin-bottom: 0.45rem;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    opacity: 0.85;
+}
+
+.about-hero h1 {
+    margin: 0 0 0.55rem;
+}
+
+.about-hero p {
+    margin: 0;
+    max-width: 68ch;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.about-grid article {
+    border: 1px solid #d5d8e3;
+    border-radius: 0.85rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.about-grid h2 {
+    margin-top: 0;
+    font-size: 1.05rem;
+}
+
+.about-grid p,
+.about-grid li {
+    color: #374151;
+}
+
+.about-grid ul {
+    margin: 0;
+    padding-left: 1.15rem;
+}
+
+.about-footer {
+    border: 1px solid #d5d8e3;
+    border-radius: 0.85rem;
+    padding: 1rem;
+    background: #f8fafc;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.about-footer p {
+    margin: 0;
+    color: #1f2937;
+    max-width: 72ch;
+}
+
+@media (max-width: 991.98px) {
+    .about-grid {
+        grid-template-columns: 1fr;
+    }
+}

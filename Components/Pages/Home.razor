@@ -1,7 +1,57 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="home-page">
+    <section class="hero">
+        <p class="kicker">ADML FINANCES</p>
+        <h1>Controle financeiro com visao clara do que importa</h1>
+        <p class="subtitle">
+            Centralize lancamentos, acompanhe cartoes e monitore indicadores para decidir com mais seguranca.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary btn-lg" href="dashboard">Abrir dashboard</a>
+            <a class="btn btn-outline-light btn-lg" href="gerenciar/lancamentos">Novo lancamento</a>
+        </div>
+    </section>
 
-Welcome to your new app.
+    <section class="quick-grid">
+        <article class="quick-card">
+            <h2>Visualizacao</h2>
+            <p>Filtre, edite e acompanhe suas pendencias em uma grade unica.</p>
+            <a href="visualizacao">Ir para visualizacao</a>
+        </article>
+        <article class="quick-card">
+            <h2>Cartoes</h2>
+            <p>Veja limite, uso atual, parcelas ativas e insights por cartao.</p>
+            <a href="gerenciar/cartoes">Abrir central de cartoes</a>
+        </article>
+        <article class="quick-card">
+            <h2>Cadastros base</h2>
+            <p>Gerencie categorias, formas de pagamento, status e empresas frequentes.</p>
+            <a href="gerenciar/formas-pagamento">Abrir gerenciar</a>
+        </article>
+    </section>
+
+    <section class="flow">
+        <h2>Fluxo sugerido</h2>
+        <div class="flow-grid">
+            <div>
+                <span>01</span>
+                <p>Cadastre categorias e formas de pagamento.</p>
+            </div>
+            <div>
+                <span>02</span>
+                <p>Registre lancamentos unicos ou multiplos por quantidade.</p>
+            </div>
+            <div>
+                <span>03</span>
+                <p>Monitore status e impacto no limite dos cartoes.</p>
+            </div>
+            <div>
+                <span>04</span>
+                <p>Use dashboard e insights para priorizar pagamentos.</p>
+            </div>
+        </div>
+    </section>
+</div>
