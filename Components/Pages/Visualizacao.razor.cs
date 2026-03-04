@@ -10,7 +10,6 @@ public partial class Visualizacao : ComponentBase
     [Inject] private ApplicationDbContext DbContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
-    private readonly List<string> tiposLancamento = ["Pagar", "Receber"];
     private List<MovimentacaoFinanceira> movimentacoes = [];
     private List<EmpresaFrequente> empresasFrequentes = [];
     private List<CategoriaGasto> categorias = [];
@@ -38,24 +37,6 @@ public partial class Visualizacao : ComponentBase
     private bool mostrarValor = true;
     private bool mostrarVencimento = true;
     private bool mostrarPagamento = true;
-
-    private bool cadastroEmLote;
-    private string novoTipoLancamento = "Pagar";
-    private string novoDescricao = string.Empty;
-    private string novoEmpresaNome = string.Empty;
-    private string novoObservacao = string.Empty;
-    private decimal novoValor;
-    private Guid novoCategoriaId;
-    private Guid novoFormaPagamentoId;
-    private Guid novoStatusId;
-    private DateTime novoDataLancamento = DateTime.Today;
-    private DateTime novoDataVencimento = DateTime.Today;
-    private DateTime? novoDataPagamento;
-    private int novoQuantidadeLote = 1;
-    private DateTime novoMesInicial = new(DateTime.Today.Year, DateTime.Today.Month, 1);
-    private DateTime? novoMesFinal;
-    private DateTime? novoDataPagamentoBase;
-    private string? mensagemCadastro;
 
     private Guid? editandoId;
     private string editandoTipoLancamento = "Pagar";
@@ -95,21 +76,6 @@ public partial class Visualizacao : ComponentBase
         categorias = await DbContext.CategoriasGasto.OrderBy(x => x.Nome).ToListAsync();
         formasPagamento = await DbContext.FormasPagamento.OrderBy(x => x.Nome).ToListAsync();
         statusPendencias = await DbContext.StatusPendencias.OrderBy(x => x.Nome).ToListAsync();
-
-        if (categorias.Count > 0)
-        {
-            novoCategoriaId = categorias[0].Id;
-        }
-
-        if (formasPagamento.Count > 0)
-        {
-            novoFormaPagamentoId = formasPagamento[0].Id;
-        }
-
-        if (statusPendencias.Count > 0)
-        {
-            novoStatusId = statusPendencias[0].Id;
-        }
 
         await BuscarAsync();
     }
@@ -176,139 +142,6 @@ public partial class Visualizacao : ComponentBase
         movimentacoes = await AplicarOrdenacao(query).ToListAsync();
     }
 
-    private async Task CadastrarAsync()
-    {
-        mensagemCadastro = null;
-        if (string.IsNullOrWhiteSpace(usuarioAtual))
-        {
-            mensagemCadastro = "Usuario nao autenticado.";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(novoDescricao) || novoValor <= 0)
-        {
-            mensagemCadastro = "Preencha tipo, descricao e valor valido.";
-            return;
-        }
-
-        var empresaId = await ObterOuCriarEmpresaAsync(novoEmpresaNome);
-        var descricao = novoDescricao.Trim();
-        var observacao = string.IsNullOrWhiteSpace(novoObservacao) ? null : novoObservacao.Trim();
-
-        var tipoNormalizado = NormalizarTipoLancamento(novoTipoLancamento);
-
-        if (cadastroEmLote)
-        {
-            var totalParcelas = CalcularQuantidadeParcelas();
-            if (totalParcelas <= 0)
-            {
-                mensagemCadastro = "Informe quantidade maior que zero ou mes final valido.";
-                return;
-            }
-
-            var baseVencimento = new DateTime(novoMesInicial.Year, novoMesInicial.Month, Math.Min(novoDataVencimento.Day, DateTime.DaysInMonth(novoMesInicial.Year, novoMesInicial.Month)));
-
-            for (var i = 0; i < totalParcelas; i++)
-            {
-                var vencimento = AjustarDiaMes(baseVencimento.AddMonths(i), novoDataVencimento.Day);
-                DateTime? pagamento = null;
-                if (novoDataPagamentoBase.HasValue)
-                {
-                    pagamento = AjustarDiaMes(vencimento, novoDataPagamentoBase.Value.Day);
-                }
-
-                DbContext.MovimentacoesFinanceiras.Add(new MovimentacaoFinanceira
-                {
-                    Id = Guid.NewGuid(),
-                    TipoLancamento = tipoNormalizado,
-                    Descricao = descricao,
-                    Valor = novoValor,
-                    DataLancamento = AjustarDiaMes(vencimento, novoDataLancamento.Day),
-                    DataVencimento = vencimento,
-                    DataPagamento = pagamento,
-                    Usuario = usuarioAtual,
-                    Observacao = observacao,
-                    EmpresaFrequenteId = empresaId,
-                    CategoriaGastoId = novoCategoriaId,
-                    FormaPagamentoId = novoFormaPagamentoId,
-                    StatusPendenciaId = novoStatusId
-                });
-            }
-
-            await DbContext.SaveChangesAsync();
-            mensagemCadastro = $"{totalParcelas} lancamentos cadastrados em lote.";
-        }
-        else
-        {
-            DbContext.MovimentacoesFinanceiras.Add(new MovimentacaoFinanceira
-            {
-                Id = Guid.NewGuid(),
-                TipoLancamento = tipoNormalizado,
-                Descricao = descricao,
-                Valor = novoValor,
-                DataLancamento = novoDataLancamento,
-                DataVencimento = novoDataVencimento,
-                DataPagamento = novoDataPagamento,
-                Usuario = usuarioAtual,
-                Observacao = observacao,
-                EmpresaFrequenteId = empresaId,
-                CategoriaGastoId = novoCategoriaId,
-                FormaPagamentoId = novoFormaPagamentoId,
-                StatusPendenciaId = novoStatusId
-            });
-
-            await DbContext.SaveChangesAsync();
-            mensagemCadastro = "Lancamento cadastrado.";
-        }
-
-        LimparFormulario();
-        await BuscarAsync();
-    }
-
-    private void LimparFormulario()
-    {
-        novoTipoLancamento = "Pagar";
-        novoDescricao = string.Empty;
-        novoEmpresaNome = string.Empty;
-        novoObservacao = string.Empty;
-        novoValor = 0m;
-        novoDataLancamento = DateTime.Today;
-        novoDataVencimento = DateTime.Today;
-        novoDataPagamento = null;
-        novoQuantidadeLote = 1;
-        novoMesInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-        novoMesFinal = null;
-        novoDataPagamentoBase = null;
-    }
-
-    private int CalcularQuantidadeParcelas()
-    {
-        if (novoQuantidadeLote > 0)
-        {
-            return novoQuantidadeLote;
-        }
-
-        if (!novoMesFinal.HasValue)
-        {
-            return 0;
-        }
-
-        var inicio = new DateTime(novoMesInicial.Year, novoMesInicial.Month, 1);
-        var fim = new DateTime(novoMesFinal.Value.Year, novoMesFinal.Value.Month, 1);
-        if (fim < inicio)
-        {
-            return 0;
-        }
-
-        return ((fim.Year - inicio.Year) * 12) + fim.Month - inicio.Month + 1;
-    }
-
-    private static DateTime AjustarDiaMes(DateTime referencia, int dia)
-    {
-        var diaFinal = Math.Min(Math.Max(dia, 1), DateTime.DaysInMonth(referencia.Year, referencia.Month));
-        return new DateTime(referencia.Year, referencia.Month, diaFinal);
-    }
-
     private async Task LimparAsync()
     {
         pesquisa = null;
@@ -346,6 +179,7 @@ public partial class Visualizacao : ComponentBase
         }
 
         var item = await DbContext.MovimentacoesFinanceiras
+            .Include(x => x.StatusPendencia)
             .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.Usuario == usuarioAtual);
 
         if (item is null)
@@ -353,17 +187,25 @@ public partial class Visualizacao : ComponentBase
             return;
         }
 
+        var statusAnteriorPago = string.Equals(item.StatusPendencia?.Nome, "Pago", StringComparison.OrdinalIgnoreCase);
+        var statusNovoNome = statusPendencias.FirstOrDefault(x => x.Id == editandoStatusId)?.Nome;
+        var statusNovoPago = string.Equals(statusNovoNome, "Pago", StringComparison.OrdinalIgnoreCase);
+
         item.TipoLancamento = NormalizarTipoLancamento(editandoTipoLancamento);
         item.Descricao = editandoDescricao.Trim();
         item.EmpresaFrequenteId = await ObterOuCriarEmpresaAsync(editandoEmpresaNome);
         item.Valor = editandoValor;
         item.DataVencimento = editandoDataVencimento;
-        item.DataPagamento = editandoDataPagamento;
+        if (!statusAnteriorPago && statusNovoPago)
+        {
+            item.DataPagamento = DateTime.Today;
+        }
         item.CategoriaGastoId = editandoCategoriaId;
         item.FormaPagamentoId = editandoFormaPagamentoId;
         item.StatusPendenciaId = editandoStatusId;
 
         await DbContext.SaveChangesAsync();
+        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, usuarioAtual);
         Cancelar();
         await BuscarAsync();
     }
@@ -394,6 +236,7 @@ public partial class Visualizacao : ComponentBase
 
         DbContext.MovimentacoesFinanceiras.Remove(item);
         await DbContext.SaveChangesAsync();
+        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, usuarioAtual);
 
         if (editandoId == id)
         {

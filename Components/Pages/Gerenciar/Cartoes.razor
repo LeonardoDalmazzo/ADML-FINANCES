@@ -1,0 +1,557 @@
+@page "/gerenciar/cartoes"
+@rendermode InteractiveServer
+@using ADML_FINANCES.Data
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext Db
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Cartoes de credito</PageTitle>
+
+<h1>Central de cartoes</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Cadastrar cartao de credito</h2>
+
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label">Nome</label>
+                <input class="form-control" @bind="novoNome" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Banco</label>
+                <input class="form-control" @bind="novoBanco" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Limite disponivel</label>
+                <input class="form-control" type="number" step="0.01" @bind="novoLimiteDisponivel" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Limite em uso</label>
+                <input class="form-control" type="number" step="0.01" @bind="novoLimiteEmUso" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Fech.</label>
+                <input class="form-control" type="number" min="1" max="31" @bind="novoDiaFechamento" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">Venc.</label>
+                <input class="form-control" type="number" min="1" max="31" @bind="novoDiaVencimento" />
+            </div>
+        </div>
+
+        <div class="row g-2 mt-1 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label">Cor na forma de pagamento</label>
+                <input type="color" class="form-control form-control-color" @bind="novaCorFormaPagamento" />
+            </div>
+            <div class="col-md-10 d-flex justify-content-end">
+                <CrudButton Text="Cadastrar cartao"
+                            IconClass="fa-solid fa-plus"
+                            Style="CrudButtonStyle.Create"
+                            OnClick="CadastrarAsync" />
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(mensagem))
+        {
+            <div class="alert alert-info mt-3 mb-0">@mensagem</div>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted">Limite total</div>
+                <div class="h4 mb-0">@TotalLimite.ToString("C")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted">Limite disponivel total</div>
+                <div class="h4 mb-0">@TotalLimiteDisponivel.ToString("C")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted">Limite em uso total</div>
+                <div class="h4 mb-0">@TotalLimiteEmUso.ToString("C")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted">Parcelas ativas (soma)</div>
+                <div class="h4 mb-0">@TotalParcelasAtivas.ToString("C")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Insights dos cartoes</h2>
+        @if (insights.Count == 0)
+        {
+            <p class="mb-0 text-muted">Sem dados suficientes para gerar insights.</p>
+        }
+        else
+        {
+            <ul class="mb-0">
+                @foreach (var insight in insights)
+                {
+                    <li>@insight</li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Visao central de cartoes</h2>
+        @if (resumos.Count == 0)
+        {
+            <p class="mb-0 text-muted">Nenhum cartao cadastrado.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Guid</th>
+                            <th>Cartao</th>
+                            <th>Banco</th>
+                            <th>Limite total</th>
+                            <th>Disponivel</th>
+                            <th>Em uso</th>
+                            <th>Uso (%)</th>
+                            <th>Fechamento</th>
+                            <th>Vencimento</th>
+                            <th>Parcelas ativas</th>
+                            <th>Valor parcelas ativas</th>
+                            <th>Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in resumos.OrderBy(x => x.Cartao.Nome))
+                        {
+                            <tr>
+                                <td>@item.Cartao.Id</td>
+                                <td>
+                                    @if (editandoId == item.Cartao.Id)
+                                    {
+                                        <input class="form-control form-control-sm" @bind="editandoNome" />
+                                    }
+                                    else
+                                    {
+                                        @item.Cartao.Nome
+                                    }
+                                </td>
+                                <td>
+                                    @if (editandoId == item.Cartao.Id)
+                                    {
+                                        <input class="form-control form-control-sm" @bind="editandoBanco" />
+                                    }
+                                    else
+                                    {
+                                        @item.Cartao.Banco
+                                    }
+                                </td>
+                                <td>@item.LimiteTotal.ToString("C")</td>
+                                <td>
+                                    @if (editandoId == item.Cartao.Id)
+                                    {
+                                        <input class="form-control form-control-sm" type="number" step="0.01" @bind="editandoLimiteDisponivel" />
+                                    }
+                                    else
+                                    {
+                                        @item.Cartao.LimiteDisponivel.ToString("C")
+                                    }
+                                </td>
+                                <td>
+                                    @if (editandoId == item.Cartao.Id)
+                                    {
+                                        <input class="form-control form-control-sm" type="number" step="0.01" @bind="editandoLimiteEmUso" />
+                                    }
+                                    else
+                                    {
+                                        @item.Cartao.LimiteEmUso.ToString("C")
+                                    }
+                                </td>
+                                <td>@item.UsoPercentual.ToString("N1")%</td>
+                                <td>
+                                    @if (editandoId == item.Cartao.Id)
+                                    {
+                                        <input class="form-control form-control-sm" type="number" min="1" max="31" @bind="editandoDiaFechamento" />
+                                    }
+                                    else
+                                    {
+                                        <span>Dia @item.Cartao.DiaFechamento</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (editandoId == item.Cartao.Id)
+                                    {
+                                        <input class="form-control form-control-sm" type="number" min="1" max="31" @bind="editandoDiaVencimento" />
+                                    }
+                                    else
+                                    {
+                                        <span>Dia @item.Cartao.DiaVencimento</span>
+                                    }
+                                </td>
+                                <td>@item.QuantidadeParcelasAtivas</td>
+                                <td>@item.ValorParcelasAtivas.ToString("C")</td>
+                                <td class="text-nowrap">
+                                    <CrudButton Text="Editar"
+                                                IconClass="fa-solid fa-pen-to-square"
+                                                Style="CrudButtonStyle.Edit"
+                                                OnClick="@(_ => Editar(item))"
+                                                Disabled="@(editandoId == item.Cartao.Id)" />
+                                    <CrudButton Text="Remover"
+                                                IconClass="fa-solid fa-trash"
+                                                Style="CrudButtonStyle.Remove"
+                                                OnClick="@(_ => RemoverAsync(item.Cartao.Id))"
+                                                Disabled="@(editandoId == item.Cartao.Id)" />
+                                    @if (editandoId == item.Cartao.Id)
+                                    {
+                                        <CrudButton Text="Salvar"
+                                                    IconClass="fa-solid fa-floppy-disk"
+                                                    Style="CrudButtonStyle.Save"
+                                                    OnClick="@(_ => SalvarAsync())" />
+                                        <CrudButton Text="Cancelar"
+                                                    IconClass="fa-solid fa-xmark"
+                                                    Style="CrudButtonStyle.Cancel"
+                                                    OnClick="@(_ => Cancelar())" />
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<CartaoCredito> cartoes = [];
+    private List<MovimentacaoFinanceira> movimentacoes = [];
+    private List<CartaoResumo> resumos = [];
+    private List<string> insights = [];
+    private string? usuarioAtual;
+
+    private string novoNome = string.Empty;
+    private string novoBanco = string.Empty;
+    private decimal novoLimiteDisponivel;
+    private decimal novoLimiteEmUso;
+    private int? novoDiaFechamento;
+    private int? novoDiaVencimento;
+    private string novaCorFormaPagamento = "#6f42c1";
+    private string? mensagem;
+    private Guid? editandoId;
+    private string editandoNome = string.Empty;
+    private string editandoBanco = string.Empty;
+    private decimal editandoLimiteDisponivel;
+    private decimal editandoLimiteEmUso;
+    private int editandoDiaFechamento = 8;
+    private int editandoDiaVencimento = 15;
+
+    private decimal TotalLimite => resumos.Sum(x => x.LimiteTotal);
+    private decimal TotalLimiteDisponivel => resumos.Sum(x => x.Cartao.LimiteDisponivel);
+    private decimal TotalLimiteEmUso => resumos.Sum(x => x.Cartao.LimiteEmUso);
+    private decimal TotalParcelasAtivas => resumos.Sum(x => x.ValorParcelasAtivas);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        usuarioAtual = authState.User.Identity?.Name;
+        await CarregarAsync();
+    }
+
+    private async Task CarregarAsync()
+    {
+        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(Db, usuarioAtual);
+
+        cartoes = await Db.CartoesCredito
+            .Include(x => x.FormaPagamento)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+
+        var query = Db.MovimentacoesFinanceiras
+            .Include(x => x.StatusPendencia)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(usuarioAtual))
+        {
+            query = query.Where(x => x.Usuario == usuarioAtual);
+        }
+
+        movimentacoes = await query.ToListAsync();
+
+        resumos = cartoes
+            .Select(cartao =>
+            {
+                var movimentosCartao = movimentacoes
+                    .Where(x => x.FormaPagamentoId == cartao.FormaPagamentoId && x.TipoLancamento == "Pagar")
+                    .ToList();
+
+                var parcelasAtivas = movimentosCartao.Where(x => !EstaLiquidado(x)).ToList();
+                var limiteTotal = cartao.LimiteDisponivel + cartao.LimiteEmUso;
+                var usoPercentual = limiteTotal <= 0 ? 0 : (cartao.LimiteEmUso / limiteTotal) * 100m;
+
+                return new CartaoResumo(
+                    cartao,
+                    limiteTotal,
+                    usoPercentual,
+                    movimentosCartao.Sum(x => x.Valor),
+                    parcelasAtivas.Count,
+                    parcelasAtivas.Sum(x => x.Valor));
+            })
+            .ToList();
+
+        insights = GerarInsights();
+    }
+
+    private async Task CadastrarAsync(MouseEventArgs _)
+    {
+        mensagem = null;
+
+        if (string.IsNullOrWhiteSpace(novoNome) || string.IsNullOrWhiteSpace(novoBanco))
+        {
+            mensagem = "Informe nome e banco.";
+            return;
+        }
+
+        if (novoLimiteDisponivel < 0 || novoLimiteEmUso < 0)
+        {
+            mensagem = "Os limites devem ser positivos.";
+            return;
+        }
+
+        if (!novoDiaFechamento.HasValue || !novoDiaVencimento.HasValue ||
+            novoDiaFechamento < 1 || novoDiaFechamento > 31 || novoDiaVencimento < 1 || novoDiaVencimento > 31)
+        {
+            mensagem = "Dia de fechamento e vencimento devem estar entre 1 e 31.";
+            return;
+        }
+
+        if (!EhCorHexValida(novaCorFormaPagamento))
+        {
+            mensagem = "Cor invalida para forma de pagamento.";
+            return;
+        }
+
+        var formaPagamento = new FormaPagamento
+        {
+            Id = Guid.NewGuid(),
+            Nome = $"Cartao: {novoNome.Trim()}",
+            Descricao = $"Cartao de credito {novoNome.Trim()} - {novoBanco.Trim()}",
+            Cor = novaCorFormaPagamento.ToUpperInvariant(),
+            Situacao = true
+        };
+
+        var cartao = new CartaoCredito
+        {
+            Id = Guid.NewGuid(),
+            Nome = novoNome.Trim(),
+            Banco = novoBanco.Trim(),
+            LimiteDisponivel = novoLimiteDisponivel,
+            LimiteEmUso = novoLimiteEmUso,
+            DiaFechamento = novoDiaFechamento.Value,
+            DiaVencimento = novoDiaVencimento.Value,
+            FormaPagamentoId = formaPagamento.Id
+        };
+
+        Db.FormasPagamento.Add(formaPagamento);
+        Db.CartoesCredito.Add(cartao);
+        await Db.SaveChangesAsync();
+
+        novoNome = string.Empty;
+        novoBanco = string.Empty;
+        novoLimiteDisponivel = 0;
+        novoLimiteEmUso = 0;
+        novoDiaFechamento = null;
+        novoDiaVencimento = null;
+        novaCorFormaPagamento = "#6f42c1";
+        mensagem = "Cartao cadastrado e liberado em Formas de Pagamento.";
+
+        await CarregarAsync();
+    }
+
+    private void Editar(CartaoResumo item)
+    {
+        editandoId = item.Cartao.Id;
+        editandoNome = item.Cartao.Nome;
+        editandoBanco = item.Cartao.Banco;
+        editandoLimiteDisponivel = item.Cartao.LimiteDisponivel;
+        editandoLimiteEmUso = item.Cartao.LimiteEmUso;
+        editandoDiaFechamento = item.Cartao.DiaFechamento;
+        editandoDiaVencimento = item.Cartao.DiaVencimento;
+        mensagem = null;
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (editandoId is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(editandoNome) || string.IsNullOrWhiteSpace(editandoBanco))
+        {
+            mensagem = "Informe nome e banco.";
+            return;
+        }
+
+        if (editandoLimiteDisponivel < 0 || editandoLimiteEmUso < 0)
+        {
+            mensagem = "Os limites devem ser positivos.";
+            return;
+        }
+
+        if (editandoDiaFechamento < 1 || editandoDiaFechamento > 31 || editandoDiaVencimento < 1 || editandoDiaVencimento > 31)
+        {
+            mensagem = "Dia de fechamento e vencimento devem estar entre 1 e 31.";
+            return;
+        }
+
+        var cartao = await Db.CartoesCredito
+            .Include(x => x.FormaPagamento)
+            .FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+
+        if (cartao is null)
+        {
+            mensagem = "Cartao nao encontrado.";
+            return;
+        }
+
+        cartao.Nome = editandoNome.Trim();
+        cartao.Banco = editandoBanco.Trim();
+        cartao.LimiteDisponivel = editandoLimiteDisponivel;
+        cartao.LimiteEmUso = editandoLimiteEmUso;
+        cartao.DiaFechamento = editandoDiaFechamento;
+        cartao.DiaVencimento = editandoDiaVencimento;
+
+        if (cartao.FormaPagamento is not null)
+        {
+            cartao.FormaPagamento.Nome = $"Cartao: {cartao.Nome}";
+            cartao.FormaPagamento.Descricao = $"Cartao de credito {cartao.Nome} - {cartao.Banco}";
+        }
+
+        await Db.SaveChangesAsync();
+        Cancelar();
+        mensagem = "Cartao atualizado.";
+        await CarregarAsync();
+    }
+
+    private async Task RemoverAsync(Guid id)
+    {
+        var cartao = await Db.CartoesCredito
+            .Include(x => x.FormaPagamento)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (cartao is null)
+        {
+            return;
+        }
+
+        var possuiMovimentacoes = await Db.MovimentacoesFinanceiras
+            .AnyAsync(x => x.FormaPagamentoId == cartao.FormaPagamentoId);
+
+        if (possuiMovimentacoes)
+        {
+            mensagem = "Nao foi possivel remover: este cartao possui movimentacoes vinculadas.";
+            return;
+        }
+
+        Db.CartoesCredito.Remove(cartao);
+
+        if (cartao.FormaPagamento is not null)
+        {
+            Db.FormasPagamento.Remove(cartao.FormaPagamento);
+        }
+
+        await Db.SaveChangesAsync();
+
+        if (editandoId == id)
+        {
+            Cancelar();
+        }
+
+        mensagem = "Cartao removido.";
+        await CarregarAsync();
+    }
+
+    private void Cancelar()
+    {
+        editandoId = null;
+        editandoNome = string.Empty;
+        editandoBanco = string.Empty;
+        editandoLimiteDisponivel = 0;
+        editandoLimiteEmUso = 0;
+        editandoDiaFechamento = 8;
+        editandoDiaVencimento = 15;
+    }
+
+    private List<string> GerarInsights()
+    {
+        var lista = new List<string>();
+        if (resumos.Count == 0)
+        {
+            return lista;
+        }
+
+        var maiorGasto = resumos.OrderByDescending(x => x.TotalGasto).First();
+        lista.Add($"Maior gasto acumulado: {maiorGasto.Cartao.Nome} ({maiorGasto.TotalGasto:C}).");
+
+        var maiorLimite = resumos.OrderByDescending(x => x.LimiteTotal).First();
+        lista.Add($"Maior limite total: {maiorLimite.Cartao.Nome} ({maiorLimite.LimiteTotal:C}).");
+
+        var maisProximoDeLimpar = resumos
+            .Where(x => x.QuantidadeParcelasAtivas > 0)
+            .OrderBy(x => x.ValorParcelasAtivas)
+            .FirstOrDefault();
+
+        if (maisProximoDeLimpar is not null)
+        {
+            lista.Add($"Mais proximo de ficar limpo: {maisProximoDeLimpar.Cartao.Nome} ({maisProximoDeLimpar.ValorParcelasAtivas:C} em parcelas ativas).");
+        }
+        else
+        {
+            lista.Add("Nao ha parcelas ativas nos cartoes cadastrados.");
+        }
+
+        lista.Add($"Parcelas ativas totais: {TotalParcelasAtivas:C}.");
+        return lista;
+    }
+
+    private static bool EstaLiquidado(MovimentacaoFinanceira item)
+    {
+        var nomeStatus = item.StatusPendencia?.Nome;
+        return nomeStatus is "Pago";
+    }
+
+    private static bool EhCorHexValida(string cor) =>
+        System.Text.RegularExpressions.Regex.IsMatch(
+            cor,
+            "^#[0-9A-Fa-f]{6}$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    private sealed record CartaoResumo(
+        CartaoCredito Cartao,
+        decimal LimiteTotal,
+        decimal UsoPercentual,
+        decimal TotalGasto,
+        int QuantidadeParcelasAtivas,
+        decimal ValorParcelasAtivas);
+}
