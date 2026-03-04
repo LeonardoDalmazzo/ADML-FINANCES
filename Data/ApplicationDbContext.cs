@@ -5,6 +5,7 @@ namespace ADML_FINANCES.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
+    public DbSet<CartaoCredito> CartoesCredito => Set<CartaoCredito>();
     public DbSet<CategoriaGasto> CategoriasGasto => Set<CategoriaGasto>();
     public DbSet<EmpresaFrequente> EmpresasFrequentes => Set<EmpresaFrequente>();
     public DbSet<FormaPagamento> FormasPagamento => Set<FormaPagamento>();
@@ -55,6 +56,23 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     Situacao = true
                 }
             );
+        });
+
+        builder.Entity<CartaoCredito>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Nome).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Banco).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.LimiteDisponivel).HasColumnType("decimal(18,2)");
+            entity.Property(x => x.LimiteEmUso).HasColumnType("decimal(18,2)");
+            entity.Property(x => x.DiaFechamento).IsRequired();
+            entity.Property(x => x.DiaVencimento).IsRequired();
+            entity.HasIndex(x => x.FormaPagamentoId).IsUnique();
+
+            entity.HasOne(x => x.FormaPagamento)
+                .WithMany()
+                .HasForeignKey(x => x.FormaPagamentoId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<EmpresaFrequente>(entity =>
