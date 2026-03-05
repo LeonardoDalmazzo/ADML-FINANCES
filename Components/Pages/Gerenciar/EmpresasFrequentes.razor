@@ -30,20 +30,21 @@
         </td>
     </RowTemplate>
     <ActionsTemplate Context="item">
-        <CrudButton Text="Editar"
-                    IconClass="fa-solid fa-pen-to-square"
-                    Style="CrudButtonStyle.Edit"
-                    OnClick="@(_ => Editar(item))"
-                    Disabled="@(editandoId == item.Id)" />
-        <CrudButton Text="Remover"
-                    IconClass="fa-solid fa-trash"
-                    Style="CrudButtonStyle.Remove"
-                    OnClick="@(_ => RemoverAsync(item.Id))"
-                    Disabled="@(editandoId == item.Id)" />
         @if (editandoId == item.Id)
         {
             <CrudButton Text="Salvar" IconClass="fa-solid fa-floppy-disk" Style="CrudButtonStyle.Save" OnClick="@(_ => SalvarAsync())" />
             <CrudButton Text="Cancelar" IconClass="fa-solid fa-xmark" Style="CrudButtonStyle.Cancel" OnClick="@(_ => Cancelar())" />
+        }
+        else
+        {
+            <CrudButton Text="Editar"
+                        IconClass="fa-solid fa-pen-to-square"
+                        Style="CrudButtonStyle.Edit"
+                        OnClick="@(_ => Editar(item))" />
+            <CrudButton Text="Remover"
+                        IconClass="fa-solid fa-trash"
+                        Style="CrudButtonStyle.Remove"
+                        OnClick="@(_ => RemoverAsync(item.Id))" />
         }
     </ActionsTemplate>
 </CrudTable>

@@ -47,7 +47,7 @@
                 <input type="color" class="form-control form-control-color" @bind="novaCorFormaPagamento" />
             </div>
             <div class="col-md-10 d-flex justify-content-end">
-                <CrudButton Text="Cadastrar cartao"
+                <CrudButton Text="Cadastrar"
                             IconClass="fa-solid fa-plus"
                             Style="CrudButtonStyle.Create"
                             OnClick="CadastrarAsync" />
@@ -212,16 +212,6 @@
                                 <td>@item.QuantidadeParcelasAtivas</td>
                                 <td>@item.ValorParcelasAtivas.ToString("C")</td>
                                 <td class="text-nowrap">
-                                    <CrudButton Text="Editar"
-                                                IconClass="fa-solid fa-pen-to-square"
-                                                Style="CrudButtonStyle.Edit"
-                                                OnClick="@(_ => Editar(item))"
-                                                Disabled="@(editandoId == item.Cartao.Id)" />
-                                    <CrudButton Text="Remover"
-                                                IconClass="fa-solid fa-trash"
-                                                Style="CrudButtonStyle.Remove"
-                                                OnClick="@(_ => RemoverAsync(item.Cartao.Id))"
-                                                Disabled="@(editandoId == item.Cartao.Id)" />
                                     @if (editandoId == item.Cartao.Id)
                                     {
                                         <CrudButton Text="Salvar"
@@ -232,6 +222,17 @@
                                                     IconClass="fa-solid fa-xmark"
                                                     Style="CrudButtonStyle.Cancel"
                                                     OnClick="@(_ => Cancelar())" />
+                                    }
+                                    else
+                                    {
+                                        <CrudButton Text="Editar"
+                                                    IconClass="fa-solid fa-pen-to-square"
+                                                    Style="CrudButtonStyle.Edit"
+                                                    OnClick="@(_ => Editar(item))" />
+                                        <CrudButton Text="Remover"
+                                                    IconClass="fa-solid fa-trash"
+                                                    Style="CrudButtonStyle.Remove"
+                                                    OnClick="@(_ => RemoverAsync(item.Cartao.Id))" />
                                     }
                                 </td>
                             </tr>
