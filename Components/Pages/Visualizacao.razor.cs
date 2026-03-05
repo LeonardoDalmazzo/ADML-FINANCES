@@ -2,6 +2,8 @@ using ADML_FINANCES.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
 
 namespace ADML_FINANCES.Components.Pages;
 
@@ -248,14 +250,15 @@ public partial class Visualizacao : ComponentBase
 
     private async Task<Guid?> ObterOuCriarEmpresaAsync(string? nomeEmpresa)
     {
-        var nome = (nomeEmpresa ?? string.Empty).Trim();
+        var nome = NormalizarEspacos(nomeEmpresa ?? string.Empty);
         if (string.IsNullOrWhiteSpace(nome))
         {
             return null;
         }
 
-        var existente = await DbContext.EmpresasFrequentes
-            .FirstOrDefaultAsync(x => x.Nome.ToUpper() == nome.ToUpper());
+        var chave = NormalizarNomeEmpresa(nome);
+        var empresas = await DbContext.EmpresasFrequentes.ToListAsync();
+        var existente = empresas.FirstOrDefault(x => NormalizarNomeEmpresa(x.Nome) == chave);
 
         if (existente is not null)
         {
@@ -269,10 +272,20 @@ public partial class Visualizacao : ComponentBase
         };
 
         DbContext.EmpresasFrequentes.Add(nova);
-        await DbContext.SaveChangesAsync();
-
-        empresasFrequentes = await DbContext.EmpresasFrequentes.OrderBy(x => x.Nome).ToListAsync();
-        return nova.Id;
+        try
+        {
+            await DbContext.SaveChangesAsync();
+            empresasFrequentes = await DbContext.EmpresasFrequentes.OrderBy(x => x.Nome).ToListAsync();
+            return nova.Id;
+        }
+        catch (DbUpdateException)
+        {
+            // Colisao de nome por concorrencia/normalizacao: reaproveita registro existente.
+            DbContext.Entry(nova).State = EntityState.Detached;
+            var concorrente = (await DbContext.EmpresasFrequentes.ToListAsync())
+                .FirstOrDefault(x => NormalizarNomeEmpresa(x.Nome) == chave);
+            return concorrente?.Id;
+        }
     }
 
     private async Task NormalizarTiposLancamentoAsync()
@@ -302,6 +315,26 @@ public partial class Visualizacao : ComponentBase
 
     private static string NormalizarTipoLancamento(string? tipo) =>
         string.Equals(tipo, "Receber", StringComparison.OrdinalIgnoreCase) ? "Receber" : "Pagar";
+
+    private static string NormalizarNomeEmpresa(string valor)
+    {
+        var normalizado = NormalizarEspacos(valor).Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(normalizado.Length);
+
+        foreach (var ch in normalizado)
+        {
+            var categoria = CharUnicodeInfo.GetUnicodeCategory(ch);
+            if (categoria != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(ch);
+            }
+        }
+
+        return sb.ToString().Normalize(NormalizationForm.FormC).ToUpperInvariant();
+    }
+
+    private static string NormalizarEspacos(string valor) =>
+        string.Join(' ', (valor ?? string.Empty).Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
     private IQueryable<MovimentacaoFinanceira> AplicarOrdenacao(IQueryable<MovimentacaoFinanceira> query)
     {
