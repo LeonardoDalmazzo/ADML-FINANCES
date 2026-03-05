@@ -4,32 +4,81 @@
 
 <div class="about-page">
     <section class="about-hero">
-        <p class="about-kicker">SOBRE O PROJETO</p>
-        <h1>ADML FINANCES</h1>
-        <p>
-            Sistema web para organizacao financeira pessoal com foco em clareza de dados,
-            controle de lancamentos e acompanhamento de cartoes de credito.
-        </p>
+        <div class="hero-copy">
+            <p class="about-kicker">SOBRE O PROJETO</p>
+            <h1>ADML FINANCES</h1>
+            <p>
+                Plataforma de organizacao financeira pessoal que une controle diario e visao estrategica
+                para voce tomar decisoes com mais seguranca.
+            </p>
+            <div class="hero-actions">
+                <a class="hero-btn hero-btn-primary" href="dashboard">Abrir dashboard</a>
+                <a class="hero-btn hero-btn-ghost" href="gerenciar/lancamentos">Novo lancamento</a>
+            </div>
+        </div>
+        <div class="hero-metrics">
+            <article>
+                <strong>360</strong>
+                <span>Visao centralizada de lancamentos e pendencias</span>
+            </article>
+            <article>
+                <strong>3x</strong>
+                <span>Mais agilidade para acompanhar cartoes e limites</span>
+            </article>
+            <article>
+                <strong>1 lugar</strong>
+                <span>Fluxo unico para registrar, monitorar e decidir</span>
+            </article>
+        </div>
     </section>
 
-    <section class="about-grid">
-        <article>
+    <section class="pillars">
+        <article class="pillar-card">
             <h2>Objetivo</h2>
             <p>
                 Dar visibilidade de compromissos financeiros, status de pagamento e impacto no limite
                 dos cartoes para facilitar decisoes do dia a dia.
             </p>
         </article>
-        <article>
-            <h2>Funcionalidades principais</h2>
+        <article class="pillar-card">
+            <h2>Como funciona</h2>
             <ul>
-                <li>Cadastro e edicao de lancamentos.</li>
-                <li>Cadastro de cartoes com limites e datas de fechamento/vencimento.</li>
-                <li>Insights por cartao (gasto, limite, parcelas ativas).</li>
-                <li>Dashboard com resumo e proximos vencimentos.</li>
+                <li>Cadastre lancamentos unicos ou em quantidade.</li>
+                <li>Monitore limites e ciclos dos cartoes de credito.</li>
+                <li>Acompanhe status para priorizar o que vence primeiro.</li>
+                <li>Use dashboard e visualizacao para ajustes rapidos.</li>
             </ul>
         </article>
-        <article>
+        <article class="pillar-card">
+            <h2>Beneficio real</h2>
+            <p>
+                Menos retrabalho manual, mais previsibilidade de caixa e melhor leitura da sua saude
+                financeira semanal e mensal.
+            </p>
+        </article>
+    </section>
+
+    <section class="about-grid">
+        <article class="about-box feature-a">
+            <h3>Gestao de lancamentos</h3>
+            <p>Entrada completa de gastos e receitas com campos claros e rapidos.</p>
+        </article>
+        <article class="about-box feature-b">
+            <h3>Cartoes com contexto</h3>
+            <p>Limites, fechamento, vencimento e impacto acumulado em um unico ponto.</p>
+        </article>
+        <article class="about-box feature-c">
+            <h3>Insights praticos</h3>
+            <p>Resumo de comportamento para ajustar prioridades e evitar surpresas.</p>
+        </article>
+        <article class="about-box feature-d">
+            <h3>Fluxo de acompanhamento</h3>
+            <p>Da inclusao ao monitoramento, com foco em acao e acompanhamento continuo.</p>
+        </article>
+    </section>
+
+    <section class="stack-section">
+        <article class="stack-card">
             <h2>Tecnologias</h2>
             <ul>
                 <li>.NET 10 + Blazor Server</li>
@@ -38,13 +87,22 @@
                 <li>ASP.NET Core Identity</li>
             </ul>
         </article>
+        <article class="stack-card">
+            <h2>Direcao do produto</h2>
+            <ul>
+                <li>Relatorios mais detalhados por periodo e categoria.</li>
+                <li>Melhorias de usabilidade no fluxo de gerenciamento.</li>
+                <li>Expansao de automacoes para tarefas recorrentes.</li>
+                <li>Refino continuo guiado pelo uso real da aplicacao.</li>
+            </ul>
+        </article>
     </section>
 
     <section class="about-footer">
         <p>
-            Esta aplicacao evolui com base no seu fluxo real de uso. Sempre que quiser,
-            podemos refinar relatorios, regras de negocio e experiencia das telas.
+            A plataforma evolui com base no seu fluxo real. Sempre que necessario, ajustamos
+            regras de negocio, relatorios e experiencia das telas para manter velocidade e clareza.
         </p>
-        <a class="btn btn-primary" href="dashboard">Ir para dashboard</a>
+        <a class="hero-btn hero-btn-primary" href="dashboard">Ir para dashboard</a>
     </section>
 </div>

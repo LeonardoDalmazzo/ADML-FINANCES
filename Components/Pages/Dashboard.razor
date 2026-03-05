@@ -4,175 +4,187 @@
 <PageTitle>Dashboard Financeiro</PageTitle>
 
 <div class="dashboard-page">
-    <section class="page-title-block">
-        <p class="page-kicker">INTELIGENCIA FINANCEIRA</p>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle mb-0">
-            KPIs e insights para orientar suas proximas decisoes.
-        </p>
+    <section class="dashboard-hero">
+        <div class="hero-content">
+            <p class="page-kicker">INTELIGENCIA FINANCEIRA</p>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">
+                KPIs e sinais de risco para orientar suas proximas decisoes com velocidade.
+            </p>
+            <div class="hero-actions">
+                <a class="hero-btn hero-btn-primary" href="gerenciar/lancamentos">Novo lancamento</a>
+                <a class="hero-btn hero-btn-ghost" href="visualizacao">Abrir visualizacao</a>
+            </div>
+        </div>
+        <div class="hero-metrics">
+            <article>
+                <span class="metric-label">Movimentacoes</span>
+                <strong>@movimentacoes.Count</strong>
+            </article>
+            <article>
+                <span class="metric-label">Insights ativos</span>
+                <strong>@Insights.Count</strong>
+            </article>
+            <article>
+                <span class="metric-label">Taxa de liquidacao</span>
+                <strong>@TaxaLiquidacao.ToString("0.0")%</strong>
+            </article>
+        </div>
     </section>
 
     <section class="kpi-grid">
-        <article class="kpi-card card-1">
+        <article class="kpi-card kpi-1">
             <p class="kpi-label">Total a pagar</p>
             <p class="kpi-value">@TotalPagar.ToString("C")</p>
+            <span class="kpi-foot">Compromissos totais</span>
         </article>
-        <article class="kpi-card card-2">
+        <article class="kpi-card kpi-2">
             <p class="kpi-label">Total a receber</p>
             <p class="kpi-value">@TotalReceber.ToString("C")</p>
+            <span class="kpi-foot">Entradas previstas</span>
         </article>
-        <article class="kpi-card card-3">
+        <article class="kpi-card kpi-3">
             <p class="kpi-label">Saldo projetado</p>
             <p class="kpi-value">@SaldoProjetado.ToString("C")</p>
+            <span class="kpi-foot @(SaldoProjetado >= 0 ? "text-positive" : "text-alert")">@(SaldoProjetado >= 0 ? "Cenario favoravel" : "Atencao ao saldo")</span>
         </article>
-        <article class="kpi-card card-4">
+        <article class="kpi-card kpi-4">
             <p class="kpi-label">Vencidos</p>
             <p class="kpi-value">@TotalVencidos.ToString("C")</p>
+            <span class="kpi-foot">Prioridade de regularizacao</span>
         </article>
-        <article class="kpi-card card-5">
+        <article class="kpi-card kpi-5">
             <p class="kpi-label">Vencendo em 7 dias</p>
             <p class="kpi-value">@TotalVencendo7Dias.ToString("C")</p>
+            <span class="kpi-foot">Janela de curto prazo</span>
         </article>
-        <article class="kpi-card card-6">
+        <article class="kpi-card kpi-6">
             <p class="kpi-label">Taxa de liquidacao</p>
             <p class="kpi-value">@TaxaLiquidacao.ToString("0.0")%</p>
+            <span class="kpi-foot">Quanto ja foi resolvido</span>
         </article>
-        <article class="kpi-card card-7">
+        <article class="kpi-card kpi-7">
             <p class="kpi-label">Ticket medio (pagar)</p>
             <p class="kpi-value">@TicketMedioPagar.ToString("C")</p>
+            <span class="kpi-foot">Media dos pagamentos</span>
         </article>
-        <article class="kpi-card card-8">
+        <article class="kpi-card kpi-8">
             <p class="kpi-label">Ticket medio (receber)</p>
             <p class="kpi-value">@TicketMedioReceber.ToString("C")</p>
+            <span class="kpi-foot">Media dos recebimentos</span>
         </article>
     </section>
 
-    <div class="row g-3 mt-1">
-        <div class="col-12 col-xl-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h2 class="h5">Top categorias (a pagar)</h2>
-                    @if (TopCategoriasPagar.Count == 0)
+    <section class="panel-grid">
+        <article class="panel-card">
+            <h2>Top categorias (a pagar)</h2>
+            @if (TopCategoriasPagar.Count == 0)
+            {
+                <p class="panel-empty">Sem dados suficientes.</p>
+            }
+            else
+            {
+                <ul class="ranking-list">
+                    @foreach (var item in TopCategoriasPagar)
                     {
-                        <p class="text-muted mb-0">Sem dados suficientes.</p>
+                        <li class="ranking-item">
+                            <span>@item.Nome</span>
+                            <strong>@item.Valor.ToString("C")</strong>
+                        </li>
                     }
-                    else
+                </ul>
+            }
+        </article>
+
+        <article class="panel-card">
+            <h2>Top empresas</h2>
+            @if (TopEmpresas.Count == 0)
+            {
+                <p class="panel-empty">Sem dados suficientes.</p>
+            }
+            else
+            {
+                <ul class="ranking-list">
+                    @foreach (var item in TopEmpresas)
                     {
-                        <ul class="list-unstyled mb-0 ranking-list">
-                            @foreach (var item in TopCategoriasPagar)
-                            {
-                                <li class="ranking-item">
-                                    <span>@item.Nome</span>
-                                    <strong>@item.Valor.ToString("C")</strong>
-                                </li>
-                            }
-                        </ul>
+                        <li class="ranking-item">
+                            <span>@item.Nome</span>
+                            <strong>@item.Valor.ToString("C")</strong>
+                        </li>
                     }
-                </div>
+                </ul>
+            }
+        </article>
+
+        <article class="panel-card">
+            <h2>Proximos vencimentos (10 dias)</h2>
+            @if (ProximosVencimentos.Count == 0)
+            {
+                <p class="panel-empty">Nenhum vencimento no periodo.</p>
+            }
+            else
+            {
+                <ul class="ranking-list">
+                    @foreach (var item in ProximosVencimentos)
+                    {
+                        <li class="ranking-item">
+                            <span>@item.DataVencimento.ToString("dd/MM") - @item.Descricao</span>
+                            <strong>@item.Valor.ToString("C")</strong>
+                        </li>
+                    }
+                </ul>
+            }
+        </article>
+
+        <article class="panel-card">
+            <h2>Insights rapidos</h2>
+            @if (Insights.Count == 0)
+            {
+                <p class="panel-empty">Sem insights no momento.</p>
+            }
+            else
+            {
+                <ul class="insight-list">
+                    @foreach (var insight in Insights)
+                    {
+                        <li class="insight-item">@insight</li>
+                    }
+                </ul>
+            }
+        </article>
+    </section>
+
+    <section class="monthly-card">
+        <h2>Visao mensal (ultimos 6 meses)</h2>
+        @if (ResumoMensal.Count == 0)
+        {
+            <p class="panel-empty">Sem dados para o periodo.</p>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mes</th>
+                            <th class="text-end">A pagar</th>
+                            <th class="text-end">A receber</th>
+                            <th class="text-end">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var linha in ResumoMensal)
+                        {
+                            <tr>
+                                <td>@linha.Mes</td>
+                                <td class="text-end text-danger">@linha.TotalPagar.ToString("C")</td>
+                                <td class="text-end text-success">@linha.TotalReceber.ToString("C")</td>
+                                <td class="text-end @(linha.Saldo >= 0 ? "text-success" : "text-danger")">@linha.Saldo.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-        </div>
-        <div class="col-12 col-xl-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h2 class="h5">Top empresas</h2>
-                    @if (TopEmpresas.Count == 0)
-                    {
-                        <p class="text-muted mb-0">Sem dados suficientes.</p>
-                    }
-                    else
-                    {
-                        <ul class="list-unstyled mb-0 ranking-list">
-                            @foreach (var item in TopEmpresas)
-                            {
-                                <li class="ranking-item">
-                                    <span>@item.Nome</span>
-                                    <strong>@item.Valor.ToString("C")</strong>
-                                </li>
-                            }
-                        </ul>
-                    }
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-xl-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h2 class="h5">Proximos vencimentos (10 dias)</h2>
-                    @if (ProximosVencimentos.Count == 0)
-                    {
-                        <p class="text-muted mb-0">Nenhum vencimento no periodo.</p>
-                    }
-                    else
-                    {
-                        <ul class="list-unstyled mb-0 ranking-list">
-                            @foreach (var item in ProximosVencimentos)
-                            {
-                                <li class="ranking-item">
-                                    <span>@item.DataVencimento.ToString("dd/MM") - @item.Descricao</span>
-                                    <strong>@item.Valor.ToString("C")</strong>
-                                </li>
-                            }
-                        </ul>
-                    }
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-xl-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h2 class="h5">Insights rapidos</h2>
-                    @if (Insights.Count == 0)
-                    {
-                        <p class="text-muted mb-0">Sem insights no momento.</p>
-                    }
-                    else
-                    {
-                        <ul class="list-unstyled mb-0 insight-list">
-                            @foreach (var insight in Insights)
-                            {
-                                <li class="insight-item">@insight</li>
-                            }
-                        </ul>
-                    }
-                </div>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h2 class="h5">Visao mensal (ultimos 6 meses)</h2>
-                    @if (ResumoMensal.Count == 0)
-                    {
-                        <p class="text-muted mb-0">Sem dados para o periodo.</p>
-                    }
-                    else
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Mes</th>
-                                        <th class="text-end">A pagar</th>
-                                        <th class="text-end">A receber</th>
-                                        <th class="text-end">Saldo</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var linha in ResumoMensal)
-                                    {
-                                        <tr>
-                                            <td>@linha.Mes</td>
-                                            <td class="text-end text-danger">@linha.TotalPagar.ToString("C")</td>
-                                            <td class="text-end text-success">@linha.TotalReceber.ToString("C")</td>
-                                            <td class="text-end @(linha.Saldo >= 0 ? "text-success" : "text-danger")">@linha.Saldo.ToString("C")</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
+        }
+    </section>
 </div>
