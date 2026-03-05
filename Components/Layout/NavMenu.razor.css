@@ -7,21 +7,26 @@
     position: absolute;
     top: 0.5rem;
     right: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 0.7rem;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28243, 255, 254, 0.92%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(11, 79, 125, 0.52);
 }
 
 .navbar-toggler:checked {
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(79, 209, 197, 0.48);
 }
 
 .top-row {
     min-height: 3.5rem;
-    background-color: rgba(0,0,0,0.4);
+    background: linear-gradient(90deg, rgba(7, 64, 104, 0.9) 0%, rgba(13, 120, 145, 0.86) 100%);
+    border-bottom: 1px solid rgba(210, 252, 252, 0.35);
 }
 
 .navbar-brand {
     font-size: 1.1rem;
+    color: #ecfffd;
+    font-weight: 700;
+    letter-spacing: 0.03em;
 }
 
 .bi {
@@ -99,25 +104,28 @@
     }
 
     .nav-item ::deep .nav-link {
-        color: #d7d7d7;
+        color: #dffdf9;
         background: none;
         border: none;
-        border-radius: 4px;
+        border-radius: 0.65rem;
         height: 3rem;
         display: flex;
         align-items: center;
         line-height: 3rem;
         width: 100%;
+        transition: background-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
     }
 
 .nav-item ::deep a.active {
-    background-color: rgba(255,255,255,0.37);
-    color: white;
+    background-color: rgba(235, 255, 253, 0.25);
+    color: #ffffff;
+    box-shadow: 0 0 0 1px rgba(213, 255, 251, 0.55);
 }
 
 .nav-item ::deep .nav-link:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(215, 255, 250, 0.18);
     color: white;
+    transform: translateX(2px);
 }
 
 .nav-scrollable {

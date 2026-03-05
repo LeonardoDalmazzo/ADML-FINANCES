@@ -13,60 +13,60 @@
 
 <PageTitle>Log in</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-lg-6">
-        <section>
+<div class="auth-page">
+    <div class="auth-card-2col">
+        <section class="brand-side">
+            <p class="eyebrow">ADML FINANCES</p>
+            <h1>Bem-vindo de volta</h1>
+            <p>
+                Entre para acompanhar gastos, limites e movimentacoes com uma visao clara do seu financeiro.
+            </p>
+        </section>
+
+        <section class="form-side">
+            <div class="auth-toggle">
+                <a class="toggle-btn active" href="Account/Login">Login</a>
+                <a class="toggle-btn" href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register</a>
+            </div>
+
             <StatusMessage Message="@errorMessage" />
             <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
                 <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
+                <h2>Entrar na conta</h2>
                 <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
+
+                <div class="form-group">
+                    <label for="Input.Email">Email</label>
                     <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Email</label>
                     <ValidationMessage For="() => Input.Email" class="text-danger" />
                 </div>
-                <div class="form-floating mb-3">
+
+                <div class="form-group">
+                    <label for="Input.Password">Senha</label>
                     <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="Input.Password" class="form-label">Password</label>
                     <ValidationMessage For="() => Input.Password" class="text-danger" />
                 </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <hr />
-                <div class="d-flex flex-column">
-                    <span class="text-secondary mx-auto mt-2">OR</span>
-                    <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" EmailName="Input.Email" class="btn btn-link mx-auto">Log in with a passkey</PasskeySubmit>
-                </div>
-                <hr />
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
+
+                <label class="remember-me">
+                    <InputCheckbox @bind-Value="Input.RememberMe" class="form-check-input" />
+                    <span>Lembrar de mim</span>
+                </label>
+
+                <button type="submit" class="btn-submit">Entrar</button>
+
+                <div class="separator"><span>ou</span></div>
+                <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" EmailName="Input.Email" class="btn-passkey">Entrar com passkey</PasskeySubmit>
+
+                <div class="auth-links">
+                    <a href="Account/ForgotPassword">Esqueceu a senha?</a>
+                    <a href="Account/ResendEmailConfirmation">Reenviar confirmacao de email</a>
                 </div>
             </EditForm>
-        </section>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
+
+            <div class="external-box">
+                <h3>Login externo</h3>
+                <ExternalLoginPicker />
+            </div>
         </section>
     </div>
 </div>
