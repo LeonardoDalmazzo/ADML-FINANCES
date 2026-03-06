@@ -1,0 +1,92 @@
+.help-page {
+    display: grid;
+    gap: 1rem;
+}
+
+.help-hero {
+    border-radius: 1rem;
+    padding: 1.2rem;
+    color: #effdff;
+    background:
+        radial-gradient(circle at 85% 5%, rgba(155, 243, 235, 0.22), transparent 35%),
+        linear-gradient(145deg, #0a4f75 0%, #1186a8 55%, #21a9bb 100%);
+}
+
+.help-hero h1 {
+    margin: 0.1rem 0 0.35rem;
+}
+
+.help-hero p {
+    margin: 0;
+}
+
+.help-kicker {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+}
+
+.help-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.help-card {
+    border-radius: 0.9rem;
+    border: 1px solid #b9e8f1;
+    background: #f8fdff;
+    padding: 1rem;
+    box-shadow: 0 8px 18px rgba(13, 84, 109, 0.1);
+}
+
+.help-card h2 {
+    margin: 0.4rem 0 0.5rem;
+    color: #0a5576;
+    font-size: 1.1rem;
+}
+
+.help-card p,
+.help-card li {
+    color: #23576a;
+}
+
+.help-chip {
+    width: fit-content;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #0d6588;
+    background: #dcf4fb;
+    border: 1px solid #9dd7ea;
+}
+
+.help-card ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.help-btn {
+    display: inline-block;
+    margin-top: 0.25rem;
+    border-radius: 0.65rem;
+    padding: 0.55rem 0.8rem;
+    font-weight: 800;
+    text-decoration: none;
+    color: #083f5f;
+    background: #cbfbf4;
+    border: 1px solid #85d9ce;
+}
+
+.help-btn-outline {
+    background: #ffffff;
+    border-color: #95c8d8;
+}
+
+@media (max-width: 1000px) {
+    .help-grid {
+        grid-template-columns: 1fr;
+    }
+}
