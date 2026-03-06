@@ -1,0 +1,68 @@
+@rendermode InteractiveServer
+@implements IDisposable
+@using ADML_FINANCES.Data
+@using Microsoft.AspNetCore.Identity
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await VerificarOnboardingAsync();
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(VerificarOnboardingAsync);
+    }
+
+    private async Task VerificarOnboardingAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
+        if (principal.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        var rotaAtual = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        if (RotaLiberadaSemOnboarding(rotaAtual))
+        {
+            return;
+        }
+
+        var usuario = await UserManager.GetUserAsync(principal);
+        if (usuario is null || usuario.OnboardingConcluido || usuario.TourAtivo)
+        {
+            return;
+        }
+
+        NavigationManager.NavigateTo("primeiro-tour");
+    }
+
+    private static bool RotaLiberadaSemOnboarding(string rotaAtual)
+    {
+        if (string.IsNullOrWhiteSpace(rotaAtual))
+        {
+            return false;
+        }
+
+        return rotaAtual.StartsWith("primeiro-tour", StringComparison.OrdinalIgnoreCase) ||
+            rotaAtual.StartsWith("account", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

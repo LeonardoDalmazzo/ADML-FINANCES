@@ -2,6 +2,7 @@ using ADML_FINANCES.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Globalization;
 using System.Text;
 
@@ -11,6 +12,8 @@ public partial class Visualizacao : ComponentBase
 {
     [Inject] private ApplicationDbContext DbContext { get; set; } = default!;
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    [Inject] private TourProgressService TourProgressService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
     private List<MovimentacaoFinanceira> movimentacoes = [];
     private List<EmpresaFrequente> empresasFrequentes = [];
@@ -19,6 +22,7 @@ public partial class Visualizacao : ComponentBase
     private List<StatusPendencia> statusPendencias = [];
 
     private string? usuarioAtual;
+    private string? applicationUserId;
     private string? pesquisa;
     private Guid? categoriaId;
     private Guid? formaPagamentoId;
@@ -71,13 +75,31 @@ public partial class Visualizacao : ComponentBase
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         usuarioAtual = authState.User.Identity?.Name;
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         await NormalizarTiposLancamentoAsync();
 
-        empresasFrequentes = await DbContext.EmpresasFrequentes.OrderBy(x => x.Nome).ToListAsync();
-        categorias = await DbContext.CategoriasGasto.OrderBy(x => x.Nome).ToListAsync();
-        formasPagamento = await DbContext.FormasPagamento.OrderBy(x => x.Nome).ToListAsync();
-        statusPendencias = await DbContext.StatusPendencias.OrderBy(x => x.Nome).ToListAsync();
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
+        empresasFrequentes = await DbContext.EmpresasFrequentes
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+        categorias = await DbContext.CategoriasGasto
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+        formasPagamento = await DbContext.FormasPagamento
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+        statusPendencias = await DbContext.StatusPendencias
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
 
         await BuscarAsync();
     }
@@ -91,10 +113,13 @@ public partial class Visualizacao : ComponentBase
             .Include(x => x.StatusPendencia)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(usuarioAtual))
+        if (string.IsNullOrWhiteSpace(applicationUserId))
         {
-            query = query.Where(x => x.Usuario == usuarioAtual);
+            movimentacoes = [];
+            return;
         }
+
+        query = query.Where(x => x.ApplicationUserId == applicationUserId);
 
         if (!string.IsNullOrWhiteSpace(pesquisa))
         {
@@ -182,7 +207,7 @@ public partial class Visualizacao : ComponentBase
 
         var item = await DbContext.MovimentacoesFinanceiras
             .Include(x => x.StatusPendencia)
-            .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.Usuario == usuarioAtual);
+            .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.ApplicationUserId == applicationUserId);
 
         if (item is null)
         {
@@ -207,7 +232,7 @@ public partial class Visualizacao : ComponentBase
         item.StatusPendenciaId = editandoStatusId;
 
         await DbContext.SaveChangesAsync();
-        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, usuarioAtual);
+        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, applicationUserId);
         Cancelar();
         await BuscarAsync();
     }
@@ -229,7 +254,7 @@ public partial class Visualizacao : ComponentBase
     private async Task RemoverAsync(Guid id)
     {
         var item = await DbContext.MovimentacoesFinanceiras
-            .FirstOrDefaultAsync(x => x.Id == id && x.Usuario == usuarioAtual);
+            .FirstOrDefaultAsync(x => x.Id == id && x.ApplicationUserId == applicationUserId);
 
         if (item is null)
         {
@@ -238,7 +263,14 @@ public partial class Visualizacao : ComponentBase
 
         DbContext.MovimentacoesFinanceiras.Remove(item);
         await DbContext.SaveChangesAsync();
-        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, usuarioAtual);
+        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, applicationUserId);
+        await TourProgressService.RegistrarAcaoAsync(TourAction.LancamentoExcluido);
+        var usuarioTour = await TourProgressService.ObterUsuarioAsync();
+        if (usuarioTour?.TourAtivo == true && usuarioTour.TourEtapa >= TourProgressService.EtapaFinal)
+        {
+            NavigationManager.NavigateTo("primeiro-tour");
+            return;
+        }
 
         if (editandoId == id)
         {
@@ -250,6 +282,11 @@ public partial class Visualizacao : ComponentBase
 
     private async Task<Guid?> ObterOuCriarEmpresaAsync(string? nomeEmpresa)
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return null;
+        }
+
         var nome = NormalizarEspacos(nomeEmpresa ?? string.Empty);
         if (string.IsNullOrWhiteSpace(nome))
         {
@@ -257,7 +294,9 @@ public partial class Visualizacao : ComponentBase
         }
 
         var chave = NormalizarNomeEmpresa(nome);
-        var empresas = await DbContext.EmpresasFrequentes.ToListAsync();
+        var empresas = await DbContext.EmpresasFrequentes
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .ToListAsync();
         var existente = empresas.FirstOrDefault(x => NormalizarNomeEmpresa(x.Nome) == chave);
 
         if (existente is not null)
@@ -268,6 +307,7 @@ public partial class Visualizacao : ComponentBase
         var nova = new EmpresaFrequente
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = nome
         };
 
@@ -275,14 +315,19 @@ public partial class Visualizacao : ComponentBase
         try
         {
             await DbContext.SaveChangesAsync();
-            empresasFrequentes = await DbContext.EmpresasFrequentes.OrderBy(x => x.Nome).ToListAsync();
+            empresasFrequentes = await DbContext.EmpresasFrequentes
+                .Where(x => x.ApplicationUserId == applicationUserId)
+                .OrderBy(x => x.Nome)
+                .ToListAsync();
             return nova.Id;
         }
         catch (DbUpdateException)
         {
             // Colisao de nome por concorrencia/normalizacao: reaproveita registro existente.
             DbContext.Entry(nova).State = EntityState.Detached;
-            var concorrente = (await DbContext.EmpresasFrequentes.ToListAsync())
+            var concorrente = (await DbContext.EmpresasFrequentes
+                .Where(x => x.ApplicationUserId == applicationUserId)
+                .ToListAsync())
                 .FirstOrDefault(x => NormalizarNomeEmpresa(x.Nome) == chave);
             return concorrente?.Id;
         }
@@ -290,13 +335,13 @@ public partial class Visualizacao : ComponentBase
 
     private async Task NormalizarTiposLancamentoAsync()
     {
-        if (string.IsNullOrWhiteSpace(usuarioAtual))
+        if (string.IsNullOrWhiteSpace(applicationUserId))
         {
             return;
         }
 
         var itens = await DbContext.MovimentacoesFinanceiras
-            .Where(x => x.Usuario == usuarioAtual)
+            .Where(x => x.ApplicationUserId == applicationUserId)
             .Where(x => x.TipoLancamento != "Pagar" && x.TipoLancamento != "Receber")
             .ToListAsync();
 

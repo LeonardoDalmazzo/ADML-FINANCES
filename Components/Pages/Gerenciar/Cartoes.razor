@@ -1,10 +1,12 @@
 @page "/gerenciar/cartoes"
 @rendermode InteractiveServer
 @using ADML_FINANCES.Data
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext Db
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TourProgressService TourProgressService
 
 <PageTitle>Cartoes de credito</PageTitle>
 
@@ -249,7 +251,7 @@
     private List<MovimentacaoFinanceira> movimentacoes = [];
     private List<CartaoResumo> resumos = [];
     private List<string> insights = [];
-    private string? usuarioAtual;
+    private string? applicationUserId;
 
     private string novoNome = string.Empty;
     private string novoBanco = string.Empty;
@@ -275,15 +277,25 @@
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        usuarioAtual = authState.User.Identity?.Name;
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
         await CarregarAsync();
     }
 
     private async Task CarregarAsync()
     {
-        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(Db, usuarioAtual);
+        await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(Db, applicationUserId);
+
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            cartoes = [];
+            movimentacoes = [];
+            resumos = [];
+            insights = [];
+            return;
+        }
 
         cartoes = await Db.CartoesCredito
+            .Where(x => x.ApplicationUserId == applicationUserId)
             .Include(x => x.FormaPagamento)
             .OrderBy(x => x.Nome)
             .ToListAsync();
@@ -292,10 +304,7 @@
             .Include(x => x.StatusPendencia)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(usuarioAtual))
-        {
-            query = query.Where(x => x.Usuario == usuarioAtual);
-        }
+        query = query.Where(x => x.ApplicationUserId == applicationUserId);
 
         movimentacoes = await query.ToListAsync();
 
@@ -326,6 +335,11 @@
     private async Task CadastrarAsync(MouseEventArgs _)
     {
         mensagem = null;
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            mensagem = "Usuario nao autenticado.";
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(novoNome) || string.IsNullOrWhiteSpace(novoBanco))
         {
@@ -355,6 +369,7 @@
         var formaPagamento = new FormaPagamento
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = $"Cartao: {novoNome.Trim()}",
             Descricao = $"Cartao de credito {novoNome.Trim()} - {novoBanco.Trim()}",
             Cor = novaCorFormaPagamento.ToUpperInvariant(),
@@ -364,6 +379,7 @@
         var cartao = new CartaoCredito
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = novoNome.Trim(),
             Banco = novoBanco.Trim(),
             LimiteDisponivel = novoLimiteDisponivel,
@@ -376,6 +392,7 @@
         Db.FormasPagamento.Add(formaPagamento);
         Db.CartoesCredito.Add(cartao);
         await Db.SaveChangesAsync();
+        await TourProgressService.RegistrarAcaoAsync(TourAction.CartaoCadastrado);
 
         novoNome = string.Empty;
         novoBanco = string.Empty;
@@ -403,7 +420,7 @@
 
     private async Task SalvarAsync()
     {
-        if (editandoId is null)
+        if (editandoId is null || string.IsNullOrWhiteSpace(applicationUserId))
         {
             return;
         }
@@ -428,7 +445,7 @@
 
         var cartao = await Db.CartoesCredito
             .Include(x => x.FormaPagamento)
-            .FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+            .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.ApplicationUserId == applicationUserId);
 
         if (cartao is null)
         {
@@ -457,9 +474,14 @@
 
     private async Task RemoverAsync(Guid id)
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
         var cartao = await Db.CartoesCredito
             .Include(x => x.FormaPagamento)
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && x.ApplicationUserId == applicationUserId);
 
         if (cartao is null)
         {
@@ -467,7 +489,7 @@
         }
 
         var possuiMovimentacoes = await Db.MovimentacoesFinanceiras
-            .AnyAsync(x => x.FormaPagamentoId == cartao.FormaPagamentoId);
+            .AnyAsync(x => x.ApplicationUserId == applicationUserId && x.FormaPagamentoId == cartao.FormaPagamentoId);
 
         if (possuiMovimentacoes)
         {

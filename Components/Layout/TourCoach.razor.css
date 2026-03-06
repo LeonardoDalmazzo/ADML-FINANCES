@@ -1,0 +1,70 @@
+.primeiros-passos-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    padding: 1rem;
+}
+
+.primeiros-passos-card {
+    width: min(560px, 100%);
+    pointer-events: auto;
+    background: linear-gradient(145deg, #f7fdff 0%, #edf9ff 45%, #e6f6fb 100%);
+    color: #0b3b57;
+    border: 1px solid #7ccfe0;
+    border-radius: 18px;
+    box-shadow: 0 14px 34px rgba(10, 90, 120, 0.22);
+    padding: 1.25rem;
+}
+
+.primeiros-passos-kicker {
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0b7ea2;
+    font-weight: 700;
+}
+
+.primeiros-passos-progress {
+    margin: 0.35rem 0 0;
+    color: #156082;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.primeiros-passos-title {
+    margin: 0.35rem 0 0;
+    color: #094867;
+}
+
+.primeiros-passos-desc {
+    margin: 0.5rem 0 0;
+}
+
+.primeiros-passos-context {
+    margin: 0.5rem 0 0;
+    color: #0e5578;
+}
+
+.primeiros-passos-extra {
+    margin: 0.35rem 0 0;
+    color: #11749a;
+    font-size: 0.9rem;
+}
+
+.primeiros-passos-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.primeiros-passos-lock {
+    margin-top: 0.5rem;
+    color: #0c6f93;
+    font-size: 0.85rem;
+    font-weight: 600;
+}

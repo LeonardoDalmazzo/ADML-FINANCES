@@ -1,8 +1,11 @@
 @page "/gerenciar/formas-pagamento"
 @rendermode InteractiveServer
 @using ADML_FINANCES.Data
+@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext Db
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TourProgressService TourProgressService
 
 <PageTitle>Formas de Pagamento</PageTitle>
 
@@ -103,22 +106,35 @@
     private string editandoDescricao = string.Empty;
     private string editandoCor = "#0d6efd";
     private string editandoSituacaoTexto = "Ativo";
+    private string? applicationUserId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
         await CarregarAsync();
     }
 
     private async Task CarregarAsync()
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            itens = [];
+            return;
+        }
+
         itens = await Db.FormasPagamento
+            .Where(x => x.ApplicationUserId == applicationUserId)
             .OrderBy(x => x.Nome)
             .ToListAsync();
     }
 
     private async Task CadastrarAsync(MouseEventArgs _)
     {
-        if (string.IsNullOrWhiteSpace(novoNome) || string.IsNullOrWhiteSpace(novaDescricao) || !EhCorHexValida(novaCor))
+        if (string.IsNullOrWhiteSpace(applicationUserId) ||
+            string.IsNullOrWhiteSpace(novoNome) ||
+            string.IsNullOrWhiteSpace(novaDescricao) ||
+            !EhCorHexValida(novaCor))
         {
             return;
         }
@@ -126,6 +142,7 @@
         Db.FormasPagamento.Add(new FormaPagamento
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = novoNome.Trim(),
             Descricao = novaDescricao.Trim(),
             Cor = novaCor.ToUpperInvariant(),
@@ -133,6 +150,7 @@
         });
 
         await Db.SaveChangesAsync();
+        await TourProgressService.RegistrarAcaoAsync(TourAction.FormaPagamentoCadastrada);
         novoNome = string.Empty;
         novaDescricao = string.Empty;
         novaCor = "#0d6efd";
@@ -151,12 +169,17 @@
 
     private async Task SalvarAsync()
     {
-        if (editandoId is null || string.IsNullOrWhiteSpace(editandoNome) || string.IsNullOrWhiteSpace(editandoDescricao) || !EhCorHexValida(editandoCor))
+        if (editandoId is null ||
+            string.IsNullOrWhiteSpace(applicationUserId) ||
+            string.IsNullOrWhiteSpace(editandoNome) ||
+            string.IsNullOrWhiteSpace(editandoDescricao) ||
+            !EhCorHexValida(editandoCor))
         {
             return;
         }
 
-        var item = await Db.FormasPagamento.FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+        var item = await Db.FormasPagamento
+            .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;
@@ -174,7 +197,13 @@
 
     private async Task RemoverAsync(Guid id)
     {
-        var item = await Db.FormasPagamento.FirstOrDefaultAsync(x => x.Id == id);
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
+        var item = await Db.FormasPagamento
+            .FirstOrDefaultAsync(x => x.Id == id && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;

@@ -1,8 +1,11 @@
 @page "/gerenciar/empresas"
 @rendermode InteractiveServer
 @using ADML_FINANCES.Data
+@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext Db
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TourProgressService TourProgressService
 
 <PageTitle>Empresas frequentes</PageTitle>
 
@@ -55,28 +58,44 @@
     private string novoNome = string.Empty;
     private Guid? editandoId;
     private string editandoNome = string.Empty;
+    private string? applicationUserId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
         await CarregarAsync();
     }
 
     private async Task CarregarAsync()
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            itens = [];
+            return;
+        }
+
         itens = await Db.EmpresasFrequentes
+            .Where(x => x.ApplicationUserId == applicationUserId)
             .OrderBy(x => x.Nome)
             .ToListAsync();
     }
 
     private async Task CadastrarAsync(MouseEventArgs _)
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
         var nome = NormalizarNome(novoNome);
         if (string.IsNullOrWhiteSpace(nome))
         {
             return;
         }
 
-        var existe = await Db.EmpresasFrequentes.AnyAsync(x => x.Nome.ToUpper() == nome.ToUpper());
+        var existe = await Db.EmpresasFrequentes
+            .AnyAsync(x => x.ApplicationUserId == applicationUserId && x.Nome.ToUpper() == nome.ToUpper());
         if (existe)
         {
             return;
@@ -85,10 +104,12 @@
         Db.EmpresasFrequentes.Add(new EmpresaFrequente
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = nome
         });
 
         await Db.SaveChangesAsync();
+        await TourProgressService.RegistrarAcaoAsync(TourAction.EmpresaCadastrada);
         novoNome = string.Empty;
         await CarregarAsync();
     }
@@ -101,7 +122,7 @@
 
     private async Task SalvarAsync()
     {
-        if (editandoId is null)
+        if (editandoId is null || string.IsNullOrWhiteSpace(applicationUserId))
         {
             return;
         }
@@ -113,13 +134,17 @@
         }
 
         var duplicado = await Db.EmpresasFrequentes
-            .AnyAsync(x => x.Id != editandoId.Value && x.Nome.ToUpper() == nome.ToUpper());
+            .AnyAsync(x =>
+                x.ApplicationUserId == applicationUserId &&
+                x.Id != editandoId.Value &&
+                x.Nome.ToUpper() == nome.ToUpper());
         if (duplicado)
         {
             return;
         }
 
-        var item = await Db.EmpresasFrequentes.FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+        var item = await Db.EmpresasFrequentes
+            .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;
@@ -133,7 +158,13 @@
 
     private async Task RemoverAsync(Guid id)
     {
-        var item = await Db.EmpresasFrequentes.FirstOrDefaultAsync(x => x.Id == id);
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
+        var item = await Db.EmpresasFrequentes
+            .FirstOrDefaultAsync(x => x.Id == id && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;

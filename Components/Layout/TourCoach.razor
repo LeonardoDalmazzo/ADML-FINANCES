@@ -1,0 +1,111 @@
+@rendermode InteractiveServer
+@implements IDisposable
+@using ADML_FINANCES.Data
+
+@inject NavigationManager NavigationManager
+@inject TourProgressService TourProgressService
+
+@if (tourAtivo)
+{
+    <section class="primeiros-passos-overlay">
+        <div class="primeiros-passos-card">
+            <p class="primeiros-passos-kicker">Primeiros passos</p>
+            <p class="primeiros-passos-progress">@etapaInfo.Progresso</p>
+            <h3 class="primeiros-passos-title">@etapaInfo.Titulo</h3>
+            <p class="primeiros-passos-desc">@etapaInfo.Descricao</p>
+            <p class="primeiros-passos-context">@etapaInfo.Contexto</p>
+
+            <div class="primeiros-passos-actions">
+                @if (etapaAtual >= TourProgressService.EtapaFinal)
+                {
+                    <button class="btn btn-primary btn-sm" @onclick="FinalizarAsync">Concluir</button>
+                }
+                else
+                {
+                    <button class="btn btn-primary btn-sm" @onclick="AvancarAsync">Avancar</button>
+                }
+                <button class="btn btn-outline-secondary btn-sm" @onclick="PularAsync">Pular tutorial</button>
+            </div>
+            @if (!etapaConcluida && etapaAtual < TourProgressService.EtapaFinal)
+            {
+                <p class="primeiros-passos-lock mb-0">Use Avancar para ir direto para a tela desta etapa.</p>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    private bool tourAtivo;
+    private int etapaAtual;
+    private bool etapaConcluida;
+    private TourProgressService.TourEtapaInfo etapaInfo = new("", "", "", "", "");
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AtualizarEstadoAsync();
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await TourProgressService.RegistrarNavegacaoAsync(NavigationManager.ToBaseRelativePath(e.Location));
+            await AtualizarEstadoAsync();
+        });
+    }
+
+    private async Task AtualizarEstadoAsync()
+    {
+        var usuario = await TourProgressService.ObterUsuarioAsync();
+        tourAtivo = usuario?.TourAtivo == true;
+        etapaAtual = usuario?.TourEtapa ?? 0;
+        etapaConcluida = TourProgressService.EtapaConcluida(etapaAtual);
+        etapaInfo = TourProgressService.ObterEtapaInfo(etapaAtual);
+        StateHasChanged();
+    }
+
+    private async Task AvancarAsync()
+    {
+        var usuario = await TourProgressService.ObterUsuarioAsync();
+        if (usuario is null || !usuario.TourAtivo)
+        {
+            return;
+        }
+
+        var etapa = usuario.TourEtapa;
+        if (TourProgressService.EtapaConcluida(etapa) && etapa < TourProgressService.EtapaFinal)
+        {
+            await TourProgressService.AvancarEtapaAsync();
+            usuario = await TourProgressService.ObterUsuarioAsync();
+            etapa = usuario?.TourEtapa ?? etapa;
+        }
+
+        var rota = TourProgressService.ObterRotaEtapa(etapa);
+        NavigationManager.NavigateTo(rota);
+    }
+
+    private async Task PularAsync()
+    {
+        await TourProgressService.PularOuFinalizarTourAsync();
+        NavigationManager.NavigateTo("dashboard");
+    }
+
+    private async Task FinalizarAsync()
+    {
+        await TourProgressService.PularOuFinalizarTourAsync();
+        NavigationManager.NavigateTo("dashboard");
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

@@ -1,8 +1,11 @@
 @page "/gerenciar/categorias-gasto"
 @rendermode InteractiveServer
 @using ADML_FINANCES.Data
+@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext Db
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TourProgressService TourProgressService
 
 <PageTitle>Categorias de gasto</PageTitle>
 
@@ -68,22 +71,34 @@
     private Guid? editandoId;
     private string editandoNome = string.Empty;
     private string editandoDescricao = string.Empty;
+    private string? applicationUserId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
         await CarregarAsync();
     }
 
     private async Task CarregarAsync()
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            itens = [];
+            return;
+        }
+
         itens = await Db.CategoriasGasto
+            .Where(x => x.ApplicationUserId == applicationUserId)
             .OrderBy(x => x.Nome)
             .ToListAsync();
     }
 
     private async Task CadastrarAsync(MouseEventArgs _)
     {
-        if (string.IsNullOrWhiteSpace(novoNome) || string.IsNullOrWhiteSpace(novaDescricao))
+        if (string.IsNullOrWhiteSpace(applicationUserId) ||
+            string.IsNullOrWhiteSpace(novoNome) ||
+            string.IsNullOrWhiteSpace(novaDescricao))
         {
             return;
         }
@@ -91,11 +106,13 @@
         Db.CategoriasGasto.Add(new CategoriaGasto
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = novoNome.Trim(),
             Descricao = novaDescricao.Trim()
         });
 
         await Db.SaveChangesAsync();
+        await TourProgressService.RegistrarAcaoAsync(TourAction.CategoriaCadastrada);
         novoNome = string.Empty;
         novaDescricao = string.Empty;
         await CarregarAsync();
@@ -110,12 +127,16 @@
 
     private async Task SalvarAsync()
     {
-        if (editandoId is null || string.IsNullOrWhiteSpace(editandoNome) || string.IsNullOrWhiteSpace(editandoDescricao))
+        if (editandoId is null ||
+            string.IsNullOrWhiteSpace(applicationUserId) ||
+            string.IsNullOrWhiteSpace(editandoNome) ||
+            string.IsNullOrWhiteSpace(editandoDescricao))
         {
             return;
         }
 
-        var item = await Db.CategoriasGasto.FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+        var item = await Db.CategoriasGasto
+            .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;
@@ -131,7 +152,13 @@
 
     private async Task RemoverAsync(Guid id)
     {
-        var item = await Db.CategoriasGasto.FirstOrDefaultAsync(x => x.Id == id);
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
+        var item = await Db.CategoriasGasto
+            .FirstOrDefaultAsync(x => x.Id == id && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;

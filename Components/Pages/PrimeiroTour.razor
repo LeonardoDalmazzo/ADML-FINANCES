@@ -1,0 +1,92 @@
+@page "/primeiro-tour"
+@rendermode InteractiveServer
+@using ADML_FINANCES.Data
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject TourProgressService TourProgressService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Primeiros passos</PageTitle>
+
+<div class="tour-page">
+    <section class="tour-card">
+        <p class="tour-kicker">Primeiros passos</p>
+        <h1>Primeiros passos do app</h1>
+        <p>
+            Este tutorial e simples: use o menu lateral e execute as acoes na ordem para aprender o fluxo completo.
+        </p>
+
+        <ol class="tour-list">
+            <li>Cadastrar 1 cartao.</li>
+            <li>Cadastrar 1 forma de pagamento.</li>
+            <li>Cadastrar 1 categoria.</li>
+            <li>Cadastrar 1 status.</li>
+            <li>Cadastrar 1 empresa frequente.</li>
+            <li>Cadastrar 1 lancamento.</li>
+            <li>Abrir o dashboard.</li>
+            <li>Abrir visualizacao e apagar 1 lancamento.</li>
+        </ol>
+
+        @if (tourAtivo)
+        {
+            <p class="tour-progress">@etapaInfo.Progresso</p>
+            <p class="tour-progress">@etapaInfo.Descricao</p>
+            <p class="tour-progress">@etapaInfo.Contexto</p>
+            <div class="tour-actions">
+                @if (etapaAtual >= TourProgressService.EtapaFinal)
+                {
+                    <button class="btn btn-primary" @onclick="FinalizarAsync">Finalizar tutorial</button>
+                }
+                else
+                {
+                    <span class="small text-muted align-self-center">Proximo passo: use o menu lateral.</span>
+                }
+                <button class="btn btn-outline-secondary" @onclick="PularAsync">Pular tutorial</button>
+            </div>
+        }
+        else
+        {
+            <div class="tour-actions">
+                <button class="btn btn-primary" @onclick="IniciarAsync">Iniciar/Reiniciar primeiros passos</button>
+                <button class="btn btn-outline-secondary" @onclick="PularAsync">Pular tutorial</button>
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private int etapaAtual;
+    private bool tourAtivo;
+    private TourProgressService.TourEtapaInfo etapaInfo = new("", "", "", "", "");
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarEstadoAsync();
+    }
+
+    private async Task IniciarAsync()
+    {
+        await TourProgressService.IniciarTourAsync();
+        NavigationManager.NavigateTo("dashboard");
+    }
+
+    private async Task PularAsync()
+    {
+        await TourProgressService.PularOuFinalizarTourAsync();
+        NavigationManager.NavigateTo("dashboard");
+    }
+
+    private async Task FinalizarAsync()
+    {
+        await TourProgressService.PularOuFinalizarTourAsync();
+        NavigationManager.NavigateTo("dashboard");
+    }
+
+    private async Task CarregarEstadoAsync()
+    {
+        var usuario = await TourProgressService.ObterUsuarioAsync();
+        tourAtivo = usuario?.TourAtivo == true;
+        etapaAtual = usuario?.TourEtapa ?? 0;
+        etapaInfo = TourProgressService.ObterEtapaInfo(etapaAtual);
+    }
+}

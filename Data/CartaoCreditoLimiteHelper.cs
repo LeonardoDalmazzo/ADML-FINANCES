@@ -4,9 +4,16 @@ namespace ADML_FINANCES.Data;
 
 public static class CartaoCreditoLimiteHelper
 {
-    public static async Task RecalcularLimitesEmUsoAsync(ApplicationDbContext dbContext, string? usuario = null)
+    public static async Task RecalcularLimitesEmUsoAsync(ApplicationDbContext dbContext, string? applicationUserId)
     {
-        var cartoes = await dbContext.CartoesCredito.ToListAsync();
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
+        var cartoes = await dbContext.CartoesCredito
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .ToListAsync();
         if (cartoes.Count == 0)
         {
             return;
@@ -17,10 +24,7 @@ public static class CartaoCreditoLimiteHelper
             .Where(x => x.TipoLancamento == "Pagar")
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(usuario))
-        {
-            query = query.Where(x => x.Usuario == usuario);
-        }
+        query = query.Where(x => x.ApplicationUserId == applicationUserId);
 
         var movimentacoes = await query.ToListAsync();
 

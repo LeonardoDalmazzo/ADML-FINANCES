@@ -2,6 +2,7 @@ using ADML_FINANCES.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace ADML_FINANCES.Components.Pages;
 
@@ -11,6 +12,7 @@ public partial class Dashboard : ComponentBase
     [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     private string? usuarioAtual;
+    private string? applicationUserId;
     private List<MovimentacaoFinanceira> movimentacoes = [];
 
     private decimal TotalPagar => movimentacoes.Where(x => x.TipoLancamento == "Pagar").Sum(x => x.Valor);
@@ -130,6 +132,13 @@ public partial class Dashboard : ComponentBase
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         usuarioAtual = authState.User.Identity?.Name;
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            movimentacoes = [];
+            return;
+        }
 
         var query = DbContext.MovimentacoesFinanceiras
             .Include(x => x.CategoriaGasto)
@@ -137,10 +146,7 @@ public partial class Dashboard : ComponentBase
             .Include(x => x.StatusPendencia)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(usuarioAtual))
-        {
-            query = query.Where(x => x.Usuario == usuarioAtual);
-        }
+        query = query.Where(x => x.ApplicationUserId == applicationUserId);
 
         movimentacoes = await query.ToListAsync();
     }

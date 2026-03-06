@@ -127,7 +127,12 @@
     {
         try
         {
-            return Activator.CreateInstance<ApplicationUser>();
+            var user = Activator.CreateInstance<ApplicationUser>()
+                ?? throw new InvalidOperationException("Nao foi possivel criar o usuario.");
+            user.OnboardingConcluido = false;
+            user.TourAtivo = false;
+            user.TourEtapa = 0;
+            return user;
         }
         catch
         {

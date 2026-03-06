@@ -17,6 +17,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+builder.Services.AddScoped<TourProgressService>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -67,9 +68,17 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
+await ApplyMigrationsAsync(app.Services);
 await SeedAdminUserAsync(app.Services);
 
 app.Run();
+
+static async Task ApplyMigrationsAsync(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 static async Task SeedAdminUserAsync(IServiceProvider services)
 {
@@ -86,7 +95,10 @@ static async Task SeedAdminUserAsync(IServiceProvider services)
     {
         UserName = AdminEmail,
         Email = AdminEmail,
-        EmailConfirmed = true
+        EmailConfirmed = true,
+        OnboardingConcluido = true,
+        TourAtivo = false,
+        TourEtapa = 0
     };
 
     var createResult = await userManager.CreateAsync(adminUser, AdminPassword);

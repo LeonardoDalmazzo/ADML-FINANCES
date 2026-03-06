@@ -1,11 +1,13 @@
 @page "/gerenciar/lancamentos"
 @rendermode InteractiveServer
 @using ADML_FINANCES.Data
+@using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.Data.Sqlite
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TourProgressService TourProgressService
 
 <PageTitle>Gerenciar lancamentos</PageTitle>
 
@@ -104,6 +106,7 @@
     private List<FormaPagamento> formasPagamento = [];
     private List<StatusPendencia> statusPendencias = [];
     private string? usuarioAtual;
+    private string? applicationUserId;
 
     private string novoTipoLancamento = "Pagar";
     private string novoDescricao = string.Empty;
@@ -122,11 +125,29 @@
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         usuarioAtual = authState.User.Identity?.Name;
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        empresasFrequentes = await DbContext.EmpresasFrequentes.OrderBy(x => x.Nome).ToListAsync();
-        categorias = await DbContext.CategoriasGasto.OrderBy(x => x.Nome).ToListAsync();
-        formasPagamento = await DbContext.FormasPagamento.OrderBy(x => x.Nome).ToListAsync();
-        statusPendencias = await DbContext.StatusPendencias.OrderBy(x => x.Nome).ToListAsync();
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
+        empresasFrequentes = await DbContext.EmpresasFrequentes
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+        categorias = await DbContext.CategoriasGasto
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+        formasPagamento = await DbContext.FormasPagamento
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
+        statusPendencias = await DbContext.StatusPendencias
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .OrderBy(x => x.Nome)
+            .ToListAsync();
 
         if (categorias.Count > 0)
         {
@@ -156,9 +177,15 @@
     private async Task CadastrarAsync()
     {
         mensagemCadastro = null;
-        if (string.IsNullOrWhiteSpace(usuarioAtual))
+        if (string.IsNullOrWhiteSpace(usuarioAtual) || string.IsNullOrWhiteSpace(applicationUserId))
         {
             mensagemCadastro = "Usuario nao autenticado.";
+            return;
+        }
+
+        if (categorias.Count == 0 || formasPagamento.Count == 0 || statusPendencias.Count == 0)
+        {
+            mensagemCadastro = "Cadastre ao menos uma categoria, forma de pagamento e status antes de lancar.";
             return;
         }
 
@@ -186,7 +213,10 @@
             var descricao = novoDescricao.Trim();
             var observacao = string.IsNullOrWhiteSpace(novoObservacao) ? null : novoObservacao.Trim();
             var tipoNormalizado = NormalizarTipoLancamento(novoTipoLancamento);
-            var cartao = await DbContext.CartoesCredito.FirstOrDefaultAsync(x => x.FormaPagamentoId == novoFormaPagamentoId);
+            var cartao = await DbContext.CartoesCredito
+                .FirstOrDefaultAsync(x =>
+                    x.ApplicationUserId == applicationUserId &&
+                    x.FormaPagamentoId == novoFormaPagamentoId);
             var statusSelecionadoNome = statusPendencias.FirstOrDefault(x => x.Id == novoStatusId)?.Nome;
 
             for (var i = 0; i < novoQuantidade; i++)
@@ -198,6 +228,7 @@
                 DbContext.MovimentacoesFinanceiras.Add(new MovimentacaoFinanceira
                 {
                     Id = Guid.NewGuid(),
+                    ApplicationUserId = applicationUserId,
                     TipoLancamento = tipoNormalizado,
                     Descricao = descricao,
                     Valor = novoValor,
@@ -214,7 +245,8 @@
             }
 
             await DbContext.SaveChangesAsync();
-            await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, usuarioAtual);
+            await CartaoCreditoLimiteHelper.RecalcularLimitesEmUsoAsync(DbContext, applicationUserId);
+            await TourProgressService.RegistrarAcaoAsync(TourAction.LancamentoCadastrado);
         }
         catch
         {
@@ -242,6 +274,11 @@
 
     private async Task<Guid?> ObterOuCriarEmpresaAsync(string? nomeEmpresa)
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return null;
+        }
+
         var nome = NormalizarEspacos(nomeEmpresa ?? string.Empty);
         if (string.IsNullOrWhiteSpace(nome))
         {
@@ -249,7 +286,9 @@
         }
 
         var chave = NormalizarNomeEmpresa(nome);
-        var empresas = await DbContext.EmpresasFrequentes.ToListAsync();
+        var empresas = await DbContext.EmpresasFrequentes
+            .Where(x => x.ApplicationUserId == applicationUserId)
+            .ToListAsync();
         var existente = empresas.FirstOrDefault(x => NormalizarNomeEmpresa(x.Nome) == chave);
 
         if (existente is not null)
@@ -260,6 +299,7 @@
         var nova = new EmpresaFrequente
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = nome
         };
 
@@ -267,14 +307,19 @@
         try
         {
             await DbContext.SaveChangesAsync();
-            empresasFrequentes = await DbContext.EmpresasFrequentes.OrderBy(x => x.Nome).ToListAsync();
+            empresasFrequentes = await DbContext.EmpresasFrequentes
+                .Where(x => x.ApplicationUserId == applicationUserId)
+                .OrderBy(x => x.Nome)
+                .ToListAsync();
             return nova.Id;
         }
         catch (DbUpdateException)
         {
             // Se houve colisao de nome (concorrencia/normalizacao), reaproveita o registro existente.
             DbContext.Entry(nova).State = EntityState.Detached;
-            var concorrente = (await DbContext.EmpresasFrequentes.ToListAsync())
+            var concorrente = (await DbContext.EmpresasFrequentes
+                .Where(x => x.ApplicationUserId == applicationUserId)
+                .ToListAsync())
                 .FirstOrDefault(x => NormalizarNomeEmpresa(x.Nome) == chave);
             if (concorrente is not null)
             {

@@ -1,8 +1,11 @@
 @page "/gerenciar/status-pendencias"
 @rendermode InteractiveServer
 @using ADML_FINANCES.Data
+@using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext Db
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TourProgressService TourProgressService
 
 <PageTitle>Status de Pendencias</PageTitle>
 
@@ -72,22 +75,34 @@
     private Guid? editandoId;
     private string editandoNome = string.Empty;
     private string editandoCor = "#3b82f6";
+    private string? applicationUserId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        applicationUserId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
         await CarregarAsync();
     }
 
     private async Task CarregarAsync()
     {
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            itens = [];
+            return;
+        }
+
         itens = await Db.StatusPendencias
+            .Where(x => x.ApplicationUserId == applicationUserId)
             .OrderBy(x => x.Nome)
             .ToListAsync();
     }
 
     private async Task CadastrarAsync(MouseEventArgs _)
     {
-        if (string.IsNullOrWhiteSpace(novoNome) || !EhCorHexValida(novaCor))
+        if (string.IsNullOrWhiteSpace(applicationUserId) ||
+            string.IsNullOrWhiteSpace(novoNome) ||
+            !EhCorHexValida(novaCor))
         {
             return;
         }
@@ -95,11 +110,13 @@
         Db.StatusPendencias.Add(new StatusPendencia
         {
             Id = Guid.NewGuid(),
+            ApplicationUserId = applicationUserId,
             Nome = novoNome.Trim(),
             Cor = novaCor.ToUpperInvariant()
         });
 
         await Db.SaveChangesAsync();
+        await TourProgressService.RegistrarAcaoAsync(TourAction.StatusCadastrado);
         novoNome = string.Empty;
         await CarregarAsync();
     }
@@ -113,12 +130,16 @@
 
     private async Task SalvarAsync()
     {
-        if (editandoId is null || string.IsNullOrWhiteSpace(editandoNome) || !EhCorHexValida(editandoCor))
+        if (editandoId is null ||
+            string.IsNullOrWhiteSpace(applicationUserId) ||
+            string.IsNullOrWhiteSpace(editandoNome) ||
+            !EhCorHexValida(editandoCor))
         {
             return;
         }
 
-        var item = await Db.StatusPendencias.FirstOrDefaultAsync(x => x.Id == editandoId.Value);
+        var item = await Db.StatusPendencias
+            .FirstOrDefaultAsync(x => x.Id == editandoId.Value && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;
@@ -134,7 +155,13 @@
 
     private async Task RemoverAsync(Guid id)
     {
-        var item = await Db.StatusPendencias.FirstOrDefaultAsync(x => x.Id == id);
+        if (string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            return;
+        }
+
+        var item = await Db.StatusPendencias
+            .FirstOrDefaultAsync(x => x.Id == id && x.ApplicationUserId == applicationUserId);
         if (item is null)
         {
             return;
